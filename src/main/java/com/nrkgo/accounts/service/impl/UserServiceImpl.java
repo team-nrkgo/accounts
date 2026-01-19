@@ -24,14 +24,24 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserSessionRepository userSessionRepository;
     private final PasswordEncoder passwordEncoder;
+    
+    private final com.nrkgo.accounts.repository.OrganizationRepository organizationRepository;
+    private final com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository;
+    private final com.nrkgo.accounts.repository.RoleRepository roleRepository;
 
     // Manual Constructor for DI
     public UserServiceImpl(UserRepository userRepository, 
                            UserSessionRepository userSessionRepository, 
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           com.nrkgo.accounts.repository.OrganizationRepository organizationRepository,
+                           com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
+                           com.nrkgo.accounts.repository.RoleRepository roleRepository) {
         this.userRepository = userRepository;
         this.userSessionRepository = userSessionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.organizationRepository = organizationRepository;
+        this.orgUserRepository = orgUserRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -72,8 +82,70 @@ public class UserServiceImpl implements UserService {
         user.setCountry(request.getCountry());
         user.setStatus(0); // Default status (e.g., Created / Pending Verification)
         user.setSource(1); // Direct
+        
+        // Audit Fields for User (Self-referencing usually impossible before ID, but can update after save if strict needed)
+        // For now, let's focus on the related entities which utilize the new User ID.
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Update User's own audit fields now that we have an ID
+        savedUser.setCreatedBy(savedUser.getId());
+        savedUser.setModifiedBy(savedUser.getId());
+        savedUser.setCreatedTime(LocalDateTime.now());
+        savedUser.setModifiedTime(LocalDateTime.now());
+        userRepository.save(savedUser);
+
+        // --- Default Organization Setup ---
+        
+        // 1. Create Default Organization
+        com.nrkgo.accounts.model.Organization org = new com.nrkgo.accounts.model.Organization();
+        String orgName = savedUser.getFirstName() + "'s Workspace";
+        org.setOrgName(orgName);
+        org.setOrgUrlName(orgName.toLowerCase().replaceAll("[^a-z0-9]", "-")); // Basic slugify
+        org.setStatus(1); // Active
+        
+        // Audit Fields
+        org.setCreatedBy(savedUser.getId());
+        org.setModifiedBy(savedUser.getId());
+        org.setCreatedTime(LocalDateTime.now());
+        org.setModifiedTime(LocalDateTime.now());
+        
+        com.nrkgo.accounts.model.Organization savedOrg = organizationRepository.save(org);
+
+        // 2. Resolve 'Super Admin' Role
+        com.nrkgo.accounts.model.Role superAdminRole = roleRepository.findByName("Super Admin")
+                .orElseGet(() -> {
+                    // Auto-create if not exists
+                    com.nrkgo.accounts.model.Role newRole = new com.nrkgo.accounts.model.Role();
+                    newRole.setName("Super Admin");
+                    newRole.setDescription("Default super admin role");
+                    
+                    // Audit Fields (Assigned to the first user claiming it)
+                    newRole.setCreatedBy(savedUser.getId());
+                    newRole.setModifiedBy(savedUser.getId());
+                    newRole.setCreatedTime(LocalDateTime.now());
+                    newRole.setModifiedTime(LocalDateTime.now());
+                    
+                    return roleRepository.save(newRole);
+                });
+
+        // 3. Add User to Org as Super Admin
+        com.nrkgo.accounts.model.OrgUser orgUser = new com.nrkgo.accounts.model.OrgUser();
+        orgUser.setOrgId(savedOrg.getId());
+        orgUser.setUserId(savedUser.getId());
+        orgUser.setRoleId(superAdminRole.getId());
+        orgUser.setStatus(1); // Active
+        orgUser.setIsDefault(1); // Default Org
+        
+        // Audit Fields
+        orgUser.setCreatedBy(savedUser.getId());
+        orgUser.setModifiedBy(savedUser.getId());
+        orgUser.setCreatedTime(LocalDateTime.now());
+        orgUser.setModifiedTime(LocalDateTime.now());
+        
+        orgUserRepository.save(orgUser);
+
+        return savedUser;
     }
 
     @Override
@@ -128,5 +200,87 @@ public class UserServiceImpl implements UserService {
                     return session.getExpireTime().isAfter(LocalDateTime.now());
                 })
                 .orElse(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.nrkgo.accounts.dto.InitResponse getInitData(Long userId, Long requestOrgId) {
+        // 1. Fetch User Info
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 2. Fetch all OrgUser records
+        java.util.List<com.nrkgo.accounts.model.OrgUser> orgUsers = orgUserRepository.findByUserId(userId);
+        
+        if (orgUsers.isEmpty()) {
+            throw new IllegalArgumentException("User does not belong to any organization");
+        }
+
+        // 3. Collect Org IDs and Map to Orgs
+        java.util.List<Long> orgIds = orgUsers.stream()
+                .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
+                .collect(java.util.stream.Collectors.toList());
+        
+        // Fetch all Organizations in one query
+        java.util.List<com.nrkgo.accounts.model.Organization> allOrgs = organizationRepository.findAllById(orgIds);
+        
+        // Map ID -> Org for easy lookup
+        java.util.Map<Long, com.nrkgo.accounts.model.Organization> orgMap = allOrgs.stream()
+                .collect(java.util.stream.Collectors.toMap(com.nrkgo.accounts.model.Organization::getId, org -> org));
+
+        // 4. Determine Default Org ID
+        Long targetOrgId = null;
+
+        if (requestOrgId != null) {
+            // Priority 1: Requested explicitly
+            targetOrgId = requestOrgId;
+            // Verify user belongs to this org
+            boolean belongs = orgUsers.stream().anyMatch(ou -> ou.getOrgId().equals(requestOrgId));
+            if (!belongs) {
+                 throw new SecurityException("User does not have access to requested organization");
+            }
+        } else {
+            // Priority 2: 'is_default' flag in DB
+            targetOrgId = orgUsers.stream()
+                    .filter(ou -> ou.getIsDefault() != null && ou.getIsDefault() == 1)
+                    .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
+                    .findFirst()
+                    .orElse(null);
+            
+            // Priority 3: Fallback to first found
+            if (targetOrgId == null && !orgIds.isEmpty()) {
+                targetOrgId = orgIds.get(0);
+            }
+        }
+        
+        final Long finalDefaultId = targetOrgId;
+
+        // 5. Build Response
+        com.nrkgo.accounts.dto.InitResponse response = new com.nrkgo.accounts.dto.InitResponse();
+        response.setUserInformation(user);
+        
+        java.util.List<com.nrkgo.accounts.model.Organization> otherOrgs = new java.util.ArrayList<>();
+        
+        for (com.nrkgo.accounts.model.Organization org : allOrgs) {
+            if (org.getId().equals(finalDefaultId)) {
+                response.setDefaultOrganizations(org);
+            } else {
+                otherOrgs.add(org);
+            }
+        }
+        
+        response.setOtherOrganizations(otherOrgs);
+        
+        return response;
+    }
+     
+
+    @Override
+    @Transactional(readOnly = true)
+    public User getUserBySession(String token) {
+        return userSessionRepository.findByCookie(token)
+                .filter(session -> session.getStatus() == 1 && session.getExpireTime().isAfter(LocalDateTime.now()))
+                .map(session -> userRepository.findById(session.getUserId()).orElse(null))
+                .orElse(null);
     }
 }

@@ -33,6 +33,9 @@ This document describes the architectural patterns, coding standards, and "rules
     - Input: `{ "first_name": "John", "password": "..." }`
     - Output: `{ "success": true, "data": { "created_time": "..." } }`
     - This is enforced globally via `spring.jackson.property-naming-strategy=SNAKE_CASE`.
+- **Organization Context**: All organization-based payloads (Update, Invite, etc.) MUST use `org_id` as the key.
+    - **CORRECT**: `{ "org_id": 123, ... }`
+    - **INCORRECT**: `{ "id": 123 }` (Avoid generic IDs for Organizations).
 - **Spring Boot**: Follow standard conventions.
 - **Jakarta**: Use `jakarta.*` imports (not `javax.*`) for standardized APIs like Persistence and Validation.
 

@@ -22,4 +22,8 @@ public interface UserService {
     boolean validateSession(String token);
 
     UserSession createSession(User user);
+    
+    com.nrkgo.accounts.dto.InitResponse getInitData(Long userId, Long requestOrgId);
+    
+    User getUserBySession(String token);
 }

@@ -14,6 +14,9 @@ public class InviteUserRequest {
 
     @NotNull(message = "Role ID is required")
     private Long roleId;
+    
+    @NotNull(message = "Organization ID is required")
+    private Long orgId;
 
     // Manual Getters and Setters
     public String getEmail() { return email; }
@@ -21,4 +24,8 @@ public class InviteUserRequest {
 
     public Long getRoleId() { return roleId; }
     public void setRoleId(Long roleId) { this.roleId = roleId; }
+    
+    public Long getOrgId() { return orgId; }
+    public void setOrgId(Long orgId) { this.orgId = orgId; }
+
 }

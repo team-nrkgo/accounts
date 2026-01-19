@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS org_users (
     user_id BIGINT NOT NULL,
     role_id BIGINT NOT NULL,
     status INT DEFAULT 0, -- 1: Active, 0: Pending/Invited
+    is_default INT DEFAULT 0, -- 1: Default Org for this user
     designation VARCHAR(255),
     created_by BIGINT,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

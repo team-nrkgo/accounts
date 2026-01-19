@@ -69,6 +69,34 @@ public class AuthController {
         boolean isValid = userService.validateSession(token);
         return ResponseEntity.ok(ApiResponse.success("Session validation result", isValid));
     }
+    
+    @GetMapping("/init")
+    public ResponseEntity<ApiResponse<com.nrkgo.accounts.dto.InitResponse>> init(
+            jakarta.servlet.http.HttpServletRequest request,
+            @RequestParam(name = "org_id", required = false) Long orgId) {
+        
+        String token = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("user_session".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+        
+        if (token == null) {
+             return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated: No session found"));
+        }
+        
+        User user = userService.getUserBySession(token);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated: Invalid or expired session"));
+        }
+        
+        com.nrkgo.accounts.dto.InitResponse response = userService.getInitData(user.getId(), orgId);
+        return ResponseEntity.ok(ApiResponse.success("Initialization data fetched", response));
+    }
 
     private void setCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("user_session", token);

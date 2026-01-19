@@ -32,6 +32,9 @@ public class OrgUser extends BaseEntity {
     private Long roleId; // Role in this specific Org
 
     private Integer status; // 1: Active, 0: Pending
+    
+    @Column(name = "is_default")
+    private Integer isDefault; // 1: Default
 
     private String designation; // e.g., "Software Engineer"
     
@@ -51,6 +54,9 @@ public class OrgUser extends BaseEntity {
     
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
+    
+    public Integer getIsDefault() { return isDefault; }
+    public void setIsDefault(Integer isDefault) { this.isDefault = isDefault; }
     
     public String getDesignation() { return designation; }
     public void setDesignation(String designation) { this.designation = designation; }

@@ -41,22 +41,55 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     @Transactional
-    public Organization createOrganization(String name, Long ownerId) {
-        // Standard Java creation
+    public Organization createOrganization(com.nrkgo.accounts.dto.CreateOrgRequest request, Long ownerId) {
         Organization org = new Organization();
-        org.setOrgName(name);
-        org.setOrgUrlName(name.toLowerCase().replace(" ", "-")); // Simple slug generation
+        org.setOrgName(request.getOrgName());
+        org.setOrgUrlName(request.getOrgName().toLowerCase().replaceAll("[^a-z0-9]", "-"));
         org.setStatus(1);
+        org.setWebsite(request.getWebsite());
+        org.setEmployeeCount(request.getEmployeeCount());
+        org.setDescription(request.getDescription());
+        
+        // Audit Fields
+        org.setCreatedBy(ownerId);
+        org.setModifiedBy(ownerId);
+        org.setCreatedTime(LocalDateTime.now());
+        org.setModifiedTime(LocalDateTime.now());
         
         return organizationRepository.save(org);
     }
 
     @Override
     @Transactional
-    public Digest inviteUser(Long orgId, InviteUserRequest request) {
-        // 1. Check if user exists, if not create Shadow User? 
-        // For simplicity, let's assume we find by email or create a shadow user.
+    public Organization updateOrganization(com.nrkgo.accounts.dto.CreateOrgRequest request, Long userId) {
+        if (request.getOrgId() == null) {
+            throw new IllegalArgumentException("Organization ID is required for update");
+        }
         
+        Organization org = organizationRepository.findById(request.getOrgId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+        
+        // TODO: Add permission check (Is userId an Admin of this org?)
+        
+        org.setOrgName(request.getOrgName());
+        // We typically don't update URL Name to avoid breaking links, or we do it carefully. Keeping it same for now.
+        org.setWebsite(request.getWebsite());
+        org.setEmployeeCount(request.getEmployeeCount());
+        org.setDescription(request.getDescription());
+        
+        // Audit Fields
+        org.setModifiedBy(userId);
+        org.setModifiedTime(LocalDateTime.now());
+        
+        return organizationRepository.save(org);
+    }
+
+    @Override
+    @Transactional
+    public Digest inviteUser(InviteUserRequest request, Long inviterId) {
+        Long orgId = request.getOrgId();
+        
+        // 1. Check if user exists
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
         User user;
         if (existingUser.isPresent()) {
@@ -65,16 +98,19 @@ public class OrgServiceImpl implements OrgService {
             // Create Shadow User
             user = new User();
             user.setEmail(request.getEmail());
-            user.setPassword("shadow-user-placeholder"); // Should be unusable
+            user.setPassword("shadow-user-placeholder"); 
             user.setStatus(0); // Created/Pending
+            // Audit Fields for Shadow User
+            user.setCreatedBy(inviterId);
+            user.setModifiedBy(inviterId);
+            user.setCreatedTime(LocalDateTime.now());
+            user.setModifiedTime(LocalDateTime.now());
             
             user = userRepository.save(user);
         }
 
         // 2. Check if OrgUser entry exists
         if (orgUserRepository.existsByOrgIdAndUserId(orgId, user.getId())) {
-             // If status is active, throw error. If pending, maybe resend invite?
-             // Simplification: throw error
              throw new IllegalArgumentException("User is already a member or invited");
         }
 
@@ -84,6 +120,13 @@ public class OrgServiceImpl implements OrgService {
         orgUser.setUserId(user.getId());
         orgUser.setRoleId(request.getRoleId());
         orgUser.setStatus(0); // Pending/Invited
+        orgUser.setIsDefault(0);
+        
+        // Audit Fields
+        orgUser.setCreatedBy(inviterId);
+        orgUser.setModifiedBy(inviterId);
+        orgUser.setCreatedTime(LocalDateTime.now());
+        orgUser.setModifiedTime(LocalDateTime.now());
         
         orgUserRepository.save(orgUser);
 
@@ -95,6 +138,12 @@ public class OrgServiceImpl implements OrgService {
         digest.setToken(token);
         digest.setExpiryTime(LocalDateTime.now().plusDays(7));
         digest.setMetadata("email=" + request.getEmail());
+        
+        // Audit Fields
+        digest.setCreatedBy(inviterId);
+        digest.setModifiedBy(inviterId);
+        digest.setCreatedTime(LocalDateTime.now());
+        digest.setModifiedTime(LocalDateTime.now());
         
         return digestRepository.save(digest);
     }
