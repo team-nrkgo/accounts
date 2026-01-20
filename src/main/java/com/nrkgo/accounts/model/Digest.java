@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "digests")
@@ -34,7 +34,7 @@ public class Digest extends BaseEntity {
     private String metadata; // For extra data like email if entityId isn't enough
 
     @Column(nullable = false)
-    private LocalDateTime expiryTime;
+    private Long expiryTime;
 
     // Manual Accessors
     
@@ -53,6 +53,6 @@ public class Digest extends BaseEntity {
     public String getMetadata() { return metadata; }
     public void setMetadata(String metadata) { this.metadata = metadata; }
 
-    public LocalDateTime getExpiryTime() { return expiryTime; }
-    public void setExpiryTime(LocalDateTime expiryTime) { this.expiryTime = expiryTime; }
+    public Long getExpiryTime() { return expiryTime; }
+    public void setExpiryTime(Long expiryTime) { this.expiryTime = expiryTime; }
 }

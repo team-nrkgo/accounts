@@ -37,7 +37,7 @@ export default function Signup() {
                 // Auto-login logic (Backend sets cookie)
                 // Refresh context or just update local state if response returns User
                 login(response.data.data);
-                navigate('/');
+                navigate('/settings/organization');
             }
         } catch (err: any) {
             setError(err.response?.data?.message || 'Signup failed. Please try again.');
@@ -50,6 +50,9 @@ export default function Signup() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
+                    <div className="flex justify-center mb-4">
+                        <img src="https://nrkgo.com/assets/logo.png" alt="NRKGo" className="h-12 w-auto" />
+                    </div>
                     <CardTitle className="text-2xl text-center">Create an Account</CardTitle>
                     <CardDescription className="text-center">
                         Enter your details below to create your account

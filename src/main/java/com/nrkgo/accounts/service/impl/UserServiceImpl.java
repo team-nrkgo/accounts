@@ -13,7 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+
 import java.util.Optional;
 
 @Service
@@ -91,8 +91,8 @@ public class UserServiceImpl implements UserService {
         // Update User's own audit fields now that we have an ID
         savedUser.setCreatedBy(savedUser.getId());
         savedUser.setModifiedBy(savedUser.getId());
-        savedUser.setCreatedTime(LocalDateTime.now());
-        savedUser.setModifiedTime(LocalDateTime.now());
+        savedUser.setCreatedTime(System.currentTimeMillis());
+        savedUser.setModifiedTime(System.currentTimeMillis());
         userRepository.save(savedUser);
 
         // --- Default Organization Setup ---
@@ -107,8 +107,8 @@ public class UserServiceImpl implements UserService {
         // Audit Fields
         org.setCreatedBy(savedUser.getId());
         org.setModifiedBy(savedUser.getId());
-        org.setCreatedTime(LocalDateTime.now());
-        org.setModifiedTime(LocalDateTime.now());
+        org.setCreatedTime(System.currentTimeMillis());
+        org.setModifiedTime(System.currentTimeMillis());
         
         com.nrkgo.accounts.model.Organization savedOrg = organizationRepository.save(org);
 
@@ -123,8 +123,8 @@ public class UserServiceImpl implements UserService {
                     // Audit Fields (Assigned to the first user claiming it)
                     newRole.setCreatedBy(savedUser.getId());
                     newRole.setModifiedBy(savedUser.getId());
-                    newRole.setCreatedTime(LocalDateTime.now());
-                    newRole.setModifiedTime(LocalDateTime.now());
+                    newRole.setCreatedTime(System.currentTimeMillis());
+                    newRole.setModifiedTime(System.currentTimeMillis());
                     
                     return roleRepository.save(newRole);
                 });
@@ -140,8 +140,8 @@ public class UserServiceImpl implements UserService {
         // Audit Fields
         orgUser.setCreatedBy(savedUser.getId());
         orgUser.setModifiedBy(savedUser.getId());
-        orgUser.setCreatedTime(LocalDateTime.now());
-        orgUser.setModifiedTime(LocalDateTime.now());
+        orgUser.setCreatedTime(System.currentTimeMillis());
+        orgUser.setModifiedTime(System.currentTimeMillis());
         
         orgUserRepository.save(orgUser);
 
@@ -174,7 +174,7 @@ public class UserServiceImpl implements UserService {
         session.setUserId(user.getId());
         session.setStatus(1); // Active
         session.setCookie(token);
-        session.setExpireTime(LocalDateTime.now().plusDays(1)); // 1 day expiry
+        session.setExpireTime(System.currentTimeMillis() + 86400000L); // 1 day expiry
 
         if (httpRequest != null) {
             String userAgent = httpRequest.getHeader("User-Agent");
@@ -205,7 +205,7 @@ public class UserServiceImpl implements UserService {
                 .map(session -> {
                     // Check if session is active (status=1) and not expired
                     if (session.getStatus() != 1) return false;
-                    return session.getExpireTime().isAfter(LocalDateTime.now());
+                    return session.getExpireTime() > System.currentTimeMillis();
                 })
                 .orElse(false);
     }
@@ -287,7 +287,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public User getUserBySession(String token) {
         return userSessionRepository.findByCookie(token)
-                .filter(session -> session.getStatus() == 1 && session.getExpireTime().isAfter(LocalDateTime.now()))
+                .filter(session -> session.getStatus() == 1 && session.getExpireTime() > System.currentTimeMillis())
                 .map(session -> userRepository.findById(session.getUserId()).orElse(null))
                 .orElse(null);
     }
@@ -323,7 +323,7 @@ public class UserServiceImpl implements UserService {
 
         if (updated) {
             user.setModifiedBy(userId);
-            user.setModifiedTime(LocalDateTime.now());
+            user.setModifiedTime(System.currentTimeMillis());
             return userRepository.save(user);
         }
 
@@ -334,7 +334,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public java.util.List<UserSession> getUserSessions(Long userId) {
         return userSessionRepository.findByUserIdAndStatus(userId, 1).stream()
-                .filter(s -> s.getExpireTime().isAfter(LocalDateTime.now()))
+                .filter(s -> s.getExpireTime() > System.currentTimeMillis())
                 .collect(java.util.stream.Collectors.toList());
     }
 
@@ -350,7 +350,7 @@ public class UserServiceImpl implements UserService {
         
         session.setStatus(0); // Revoke
         session.setModifiedBy(userId);
-        session.setModifiedTime(LocalDateTime.now());
+        session.setModifiedTime(System.currentTimeMillis());
         userSessionRepository.save(session);
     }
 }

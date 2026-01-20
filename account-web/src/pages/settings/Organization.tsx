@@ -22,7 +22,7 @@ interface Member {
     roleId: number; // For editing
     designation: string | null;
     status: number; // 1: Active, 0: Pending
-    createdTime: string; // ISO string
+    createdTime: number; // UTC Milliseconds
     inviteToken?: string;
     avatar_initials?: string;
     avatar_color?: string;

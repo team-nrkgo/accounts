@@ -39,10 +39,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Sidebar */}
             <aside className="w-64 bg-sidebar-bg text-slate-400 flex flex-col fixed inset-y-0 z-30">
                 <div className="p-8 flex items-center gap-3">
-                    <div className="size-8 rounded bg-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined text-white text-xl">bolt</span>
+                    <div className="size-8 rounded overflow-hidden flex items-center justify-center">
+                        <img src="https://nrkgo.com/assets/logo.png" alt="NRKGo" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-white font-semibold text-sm tracking-tight">Acme Console</span>
+                    <span className="text-white font-semibold text-sm tracking-tight">NRKGo - Accounts</span>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-1">

@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "user_sessions")
@@ -37,7 +37,7 @@ public class UserSession extends BaseEntity {
     private String deviceOs;
 
     @Column(nullable = false)
-    private LocalDateTime expireTime;
+    private Long expireTime;
 
     private String machineIp;
 
@@ -69,8 +69,8 @@ public class UserSession extends BaseEntity {
     public String getDeviceOs() { return deviceOs; }
     public void setDeviceOs(String deviceOs) { this.deviceOs = deviceOs; }
 
-    public LocalDateTime getExpireTime() { return expireTime; }
-    public void setExpireTime(LocalDateTime expireTime) { this.expireTime = expireTime; }
+    public Long getExpireTime() { return expireTime; }
+    public void setExpireTime(Long expireTime) { this.expireTime = expireTime; }
 
     public String getMachineIp() { return machineIp; }
     public void setMachineIp(String machineIp) { this.machineIp = machineIp; }

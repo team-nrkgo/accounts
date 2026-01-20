@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS users (
     mfa_enabled INT DEFAULT 0,
     profile_id BIGINT,
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    modified_time BIGINT
 );
 
 -- 2. Roles Table
@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS roles (
     description VARCHAR(255),
     org_id BIGINT,
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    modified_time BIGINT
 );
 
 -- Seed Roles
@@ -57,9 +57,9 @@ CREATE TABLE IF NOT EXISTS organizations (
     app_icon_light BIGINT,
     status INT DEFAULT 1, -- 1: Active
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    modified_time BIGINT
 );
 
 -- 4. Org Users Table (Many-to-Many User <-> Org with Role)
@@ -72,9 +72,9 @@ CREATE TABLE IF NOT EXISTS org_users (
     is_default INT DEFAULT 0, -- 1: Default Org for this user
     designation VARCHAR(255),
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    modified_time BIGINT,
     FOREIGN KEY (org_id) REFERENCES organizations(id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
@@ -87,11 +87,11 @@ CREATE TABLE IF NOT EXISTS digests (
     entity_id VARCHAR(255) NOT NULL,  -- ID of the entity
     token VARCHAR(255) NOT NULL UNIQUE,
     metadata TEXT,
-    expiry_time TIMESTAMP NOT NULL,
+    expiry_time BIGINT NOT NULL,
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    modified_time BIGINT
 );
 
 -- 6. User Sessions Table
@@ -104,12 +104,12 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     location INT,
     status INT NOT NULL,
     device_os VARCHAR(50),
-    expire_time TIMESTAMP NOT NULL,
+    expire_time BIGINT NOT NULL,
     machine_ip VARCHAR(255),
     city VARCHAR(100),
     created_by BIGINT,
-    created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_time BIGINT,
     modified_by BIGINT,
-    modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    modified_time BIGINT,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

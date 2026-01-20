@@ -8,7 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.LastModifiedBy;
 
-import java.time.LocalDateTime;
+
 
 @MappedSuperclass
 @Data
@@ -20,7 +20,7 @@ public abstract class BaseEntity {
 
     @CreationTimestamp
     @Column(name = "created_time", updatable = false)
-    private LocalDateTime createdTime;
+    private Long createdTime;
 
     @LastModifiedBy
     @Column(name = "modified_by")
@@ -28,18 +28,18 @@ public abstract class BaseEntity {
 
     @UpdateTimestamp
     @Column(name = "modified_time")
-    private LocalDateTime modifiedTime;
+    private Long modifiedTime;
 
     // Manual Accessors
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
 
-    public LocalDateTime getCreatedTime() { return createdTime; }
-    public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+    public Long getCreatedTime() { return createdTime; }
+    public void setCreatedTime(Long createdTime) { this.createdTime = createdTime; }
 
     public Long getModifiedBy() { return modifiedBy; }
     public void setModifiedBy(Long modifiedBy) { this.modifiedBy = modifiedBy; }
 
-    public LocalDateTime getModifiedTime() { return modifiedTime; }
-    public void setModifiedTime(LocalDateTime modifiedTime) { this.modifiedTime = modifiedTime; }
+    public Long getModifiedTime() { return modifiedTime; }
+    public void setModifiedTime(Long modifiedTime) { this.modifiedTime = modifiedTime; }
 }

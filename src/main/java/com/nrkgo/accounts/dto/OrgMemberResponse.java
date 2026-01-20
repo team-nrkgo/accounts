@@ -1,6 +1,6 @@
 package com.nrkgo.accounts.dto;
 
-import java.time.LocalDateTime;
+
 
 public class OrgMemberResponse {
     private Long id; // OrgUser ID
@@ -10,12 +10,13 @@ public class OrgMemberResponse {
     private String firstName;
     private String lastName;
     private Integer status; // 1: Active, 0: Pending
-    private LocalDateTime createdTime;
+    private Long createdTime;
     private Long roleId;
+    private String inviteToken;
 
     public OrgMemberResponse() {}
 
-    public OrgMemberResponse(Long id, String userEmail, String roleName, String designation, String firstName, String lastName, Integer status, LocalDateTime createdTime, Long roleId) {
+    public OrgMemberResponse(Long id, String userEmail, String roleName, String designation, String firstName, String lastName, Integer status, Long createdTime, Long roleId, String inviteToken) {
         this.id = id;
         this.userEmail = userEmail;
         this.roleName = roleName;
@@ -25,7 +26,11 @@ public class OrgMemberResponse {
         this.status = status;
         this.createdTime = createdTime;
         this.roleId = roleId;
+        this.inviteToken = inviteToken;
     }
+    
+    public String getInviteToken() { return inviteToken; }
+    public void setInviteToken(String inviteToken) { this.inviteToken = inviteToken; }
     
     public Long getRoleId() { return roleId; }
     public void setRoleId(Long roleId) { this.roleId = roleId; }
@@ -51,6 +56,6 @@ public class OrgMemberResponse {
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 
-    public LocalDateTime getCreatedTime() { return createdTime; }
-    public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+    public Long getCreatedTime() { return createdTime; }
+    public void setCreatedTime(Long createdTime) { this.createdTime = createdTime; }
 }

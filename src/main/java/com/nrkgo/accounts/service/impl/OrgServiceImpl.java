@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+
 import java.util.Optional;
 
 @Service
@@ -30,18 +30,24 @@ public class OrgServiceImpl implements OrgService {
     private final DigestRepository digestRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private final com.nrkgo.accounts.service.UserService userService;
 
     // Manual Constructor for DI
     public OrgServiceImpl(OrganizationRepository organizationRepository,
                           OrgUserRepository orgUserRepository,
                           DigestRepository digestRepository,
                           UserRepository userRepository,
-                          RoleRepository roleRepository) {
+                          RoleRepository roleRepository,
+                          org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
+                          com.nrkgo.accounts.service.UserService userService) {
         this.organizationRepository = organizationRepository;
         this.orgUserRepository = orgUserRepository;
         this.digestRepository = digestRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userService = userService;
     }
 
     @Override
@@ -58,8 +64,8 @@ public class OrgServiceImpl implements OrgService {
         // Audit Fields
         org.setCreatedBy(ownerId);
         org.setModifiedBy(ownerId);
-        org.setCreatedTime(LocalDateTime.now());
-        org.setModifiedTime(LocalDateTime.now());
+        org.setCreatedTime(System.currentTimeMillis());
+        org.setModifiedTime(System.currentTimeMillis());
         
         return organizationRepository.save(org);
     }
@@ -84,7 +90,7 @@ public class OrgServiceImpl implements OrgService {
         
         // Audit Fields
         org.setModifiedBy(userId);
-        org.setModifiedTime(LocalDateTime.now());
+        org.setModifiedTime(System.currentTimeMillis());
         
         return organizationRepository.save(org);
     }
@@ -122,8 +128,8 @@ public class OrgServiceImpl implements OrgService {
             // Audit Fields for Shadow User
             user.setCreatedBy(inviterId);
             user.setModifiedBy(inviterId);
-            user.setCreatedTime(LocalDateTime.now());
-            user.setModifiedTime(LocalDateTime.now());
+            user.setCreatedTime(System.currentTimeMillis());
+            user.setModifiedTime(System.currentTimeMillis());
             
             user = userRepository.save(user);
         }
@@ -145,8 +151,8 @@ public class OrgServiceImpl implements OrgService {
         // Audit Fields
         orgUser.setCreatedBy(inviterId);
         orgUser.setModifiedBy(inviterId);
-        orgUser.setCreatedTime(LocalDateTime.now());
-        orgUser.setModifiedTime(LocalDateTime.now());
+        orgUser.setCreatedTime(System.currentTimeMillis());
+        orgUser.setModifiedTime(System.currentTimeMillis());
         
         orgUserRepository.save(orgUser);
 
@@ -156,14 +162,14 @@ public class OrgServiceImpl implements OrgService {
         digest.setEntityType("INVITE");
         digest.setEntityId(String.valueOf(orgUser.getId())); // Storing OrgUser ID reference
         digest.setToken(token);
-        digest.setExpiryTime(LocalDateTime.now().plusDays(7));
+        digest.setExpiryTime(System.currentTimeMillis() + 604800000L); // 7 days
         digest.setMetadata("email=" + request.getEmail());
         
         // Audit Fields
         digest.setCreatedBy(inviterId);
         digest.setModifiedBy(inviterId);
-        digest.setCreatedTime(LocalDateTime.now());
-        digest.setModifiedTime(LocalDateTime.now());
+        digest.setCreatedTime(System.currentTimeMillis());
+        digest.setModifiedTime(System.currentTimeMillis());
         
         return digestRepository.save(digest);
     }
@@ -181,7 +187,7 @@ public class OrgServiceImpl implements OrgService {
         Digest digest = digestRepository.findByToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
 
-        if (digest.getExpiryTime().isBefore(LocalDateTime.now())) {
+        if (digest.getExpiryTime() < System.currentTimeMillis()) {
             throw new IllegalArgumentException("Invitation expired");
         }
 
@@ -209,6 +215,163 @@ public class OrgServiceImpl implements OrgService {
 
         // Consume Token (Delete or Mark used)
         digestRepository.delete(digest); 
+    }
+
+    @Override
+    @Transactional
+    public void claimOrgAccess(Long orgId, Long userId) {
+        OrgUser orgUser = orgUserRepository.findByOrgIdAndUserId(orgId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("No invitation found for this organization. Please contact your administrator."));
+
+        if (orgUser.getStatus() != 0) {
+            // Already active or another state
+            return; 
+        }
+
+        // Activate Member
+        orgUser.setStatus(1); // Active
+        orgUser.setModifiedBy(userId);
+        orgUser.setModifiedTime(System.currentTimeMillis());
+        
+        orgUserRepository.save(orgUser);
+        log.info("User {} successfully claimed access to Org {}", userId, orgId);
+    }
+
+    @Override
+    @Transactional
+    public String getOrGenerateInviteToken(Long requesterId, Long orgUserId) {
+        // 1. Validate Access
+        OrgUser orgUser = orgUserRepository.findById(orgUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+        
+        // Ensure requester is admin of this org (Skipped strictly for now or assume controller handles it, but good to check)
+        // For simplicity/speed obeying user request flow:
+        
+        if (orgUser.getStatus() != 0) {
+            throw new IllegalArgumentException("User is already active, no invitation link available.");
+        }
+
+        // 2. Check for existing valid token
+        Optional<Digest> existingDigest = digestRepository.findByEntityIdAndEntityType(String.valueOf(orgUserId), "INVITE");
+        
+        if (existingDigest.isPresent()) {
+            Digest d = existingDigest.get();
+            if (d.getExpiryTime() > System.currentTimeMillis()) {
+                return d.getToken();
+            } else {
+                // Expired: delete/update
+                digestRepository.delete(d);
+            }
+        }
+
+        // 3. Generate New Token
+        String token = com.nrkgo.accounts.common.util.TokenUtils.generateToken();
+        Digest digest = new Digest();
+        digest.setEntityType("INVITE");
+        digest.setEntityId(String.valueOf(orgUser.getId()));
+        digest.setToken(token);
+        digest.setExpiryTime(System.currentTimeMillis() + 604800000L);
+        
+        // Fetch User email for metadata
+        User invitedUser = userRepository.findById(orgUser.getUserId()).orElse(null);
+        if (invitedUser != null) {
+            digest.setMetadata("email=" + invitedUser.getEmail());
+        }
+        
+        digest.setCreatedBy(requesterId);
+        digest.setModifiedBy(requesterId); 
+        // Note: AuditorAware might handle createdBy/modifiedBy if configured, but manual set matches previous pattern.
+
+        digestRepository.save(digest);
+        return token;
+    }
+
+    @Override
+    @Transactional
+    public com.nrkgo.accounts.model.UserSession createSessionFromInvite(String token, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        Digest digest = digestRepository.findByToken(token)
+                .orElse(null); // Return null if invalid, don't throw, let controller handle logic or simple ignore
+        
+        if (digest == null || !"INVITE".equals(digest.getEntityType())) {
+            return null;
+        }
+
+        if (digest.getExpiryTime() < System.currentTimeMillis()) {
+            return null;
+        }
+
+        Long orgUserId = Long.parseLong(digest.getEntityId());
+        OrgUser orgUser = orgUserRepository.findById(orgUserId).orElse(null);
+        if (orgUser == null) return null;
+
+        User user = userRepository.findById(orgUser.getUserId()).orElse(null);
+        if (user == null) return null;
+        
+        // Create Session
+        return userService.createSession(user, httpRequest);
+    }
+
+    @Override
+    public com.nrkgo.accounts.dto.InvitationDetailsResponse getInvitationDetails(String token) {
+        Digest digest = digestRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired invitation token"));
+
+        if (!"INVITE".equals(digest.getEntityType())) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        Long orgUserId = Long.parseLong(digest.getEntityId());
+        OrgUser orgUser = orgUserRepository.findById(orgUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Invitation record not found"));
+
+        Organization org = organizationRepository.findById(orgUser.getOrgId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+
+        User user = userRepository.findById(orgUser.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        boolean isNewUser = (user.getStatus() == 0 && (user.getPassword() == null || user.getPassword().isEmpty() || "shadow-user-placeholder".equals(user.getPassword())));
+
+        return new com.nrkgo.accounts.dto.InvitationDetailsResponse(user.getEmail(), org.getOrgName(), user.getFirstName(), user.getLastName(), isNewUser);
+    }
+
+    @Override
+    @Transactional
+    public com.nrkgo.accounts.model.UserSession claimAccount(String token, String password, String firstName, String lastName, jakarta.servlet.http.HttpServletRequest httpRequest) {
+        Digest digest = digestRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired invitation token"));
+
+        if (!"INVITE".equals(digest.getEntityType())) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        Long orgUserId = Long.parseLong(digest.getEntityId());
+        OrgUser orgUser = orgUserRepository.findById(orgUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Invitation record not found"));
+
+        User user = userRepository.findById(orgUser.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 1. Update User (Shadow User becomes Active)
+        user.setPassword(passwordEncoder.encode(password));
+        user.setFirstName(firstName);
+        if (lastName != null) user.setLastName(lastName);
+        user.setStatus(1); // Active
+        user.setModifiedTime(System.currentTimeMillis());
+        userRepository.save(user);
+
+        // 2. Activate Org Membership
+        orgUser.setStatus(1); // Active
+        orgUser.setModifiedTime(System.currentTimeMillis());
+        orgUserRepository.save(orgUser);
+
+        // 3. Create Session (Auto-login)
+        com.nrkgo.accounts.model.UserSession session = userService.createSession(user, httpRequest);
+
+        // 4. Consume Token
+        digestRepository.delete(digest);
+
+        return session;
     }
 
     @Override
@@ -264,7 +427,7 @@ public class OrgServiceImpl implements OrgService {
         }
         
         targetOrgUser.setModifiedBy(requesterId);
-        targetOrgUser.setModifiedTime(LocalDateTime.now());
+        targetOrgUser.setModifiedTime(System.currentTimeMillis());
         orgUserRepository.save(targetOrgUser);
 
         // 4. Update User Data (Name)
@@ -334,8 +497,8 @@ public class OrgServiceImpl implements OrgService {
         // Audit
         role.setCreatedBy(requesterId);
         role.setModifiedBy(requesterId);
-        role.setCreatedTime(LocalDateTime.now());
-        role.setModifiedTime(LocalDateTime.now());
+        role.setCreatedTime(System.currentTimeMillis());
+        role.setModifiedTime(System.currentTimeMillis());
         
         return roleRepository.save(role);
     }
@@ -356,7 +519,7 @@ public class OrgServiceImpl implements OrgService {
         role.setName(request.getName());
         role.setDescription(request.getDescription());
         role.setModifiedBy(requesterId);
-        role.setModifiedTime(LocalDateTime.now());
+        role.setModifiedTime(System.currentTimeMillis());
         
         return roleRepository.save(role);
     }

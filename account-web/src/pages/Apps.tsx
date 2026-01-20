@@ -1,47 +1,64 @@
+interface AppCardProps {
+    name: string;
+    category: string;
+    description: string;
+    href: string;
+    logo: string;
+    icon?: string;
+}
+
+function AppCard({ name, category, description, href, logo, icon }: AppCardProps) {
+    return (
+        <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-xl hover:border-slate-300 transition-all duration-300 flex flex-col h-full"
+        >
+            <div className="flex items-start justify-between mb-6">
+                <div className="size-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden">
+                    {logo ? (
+                        <img src={logo} alt={name} className="w-8 h-8 object-contain" />
+                    ) : (
+                        <span className="material-symbols-outlined text-slate-400 text-2xl">{icon}</span>
+                    )}
+                </div>
+                <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors text-xl">open_in_new</span>
+            </div>
+
+            <div className="mb-4">
+                <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{name}</h3>
+                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">{category}</p>
+            </div>
+
+            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
+                {description}
+            </p>
+
+            <button className="w-full py-2 px-4 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-700 transition-colors">
+                Open Application
+            </button>
+        </a>
+    );
+}
+
 export default function Apps() {
     return (
         <div className="w-full">
-            <div className="px-10 py-8 max-w-6xl mx-auto space-y-8">
+            <div className="px-10 py-10 max-w-6xl mx-auto space-y-10">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Apps</h1>
-                    <p className="text-slate-500 mt-2 text-sm">Access and manage your subscribed applications.</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">All Applications</h1>
+                    <p className="text-slate-500 mt-2 text-sm">Central hub for all your NRKGo workspace applications.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* SnapSteps Card */}
-                    <a
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <AppCard
+                        name="SnapSteps"
+                        category="Productivity"
+                        description="Automatically document your workflows and create step-by-step guides in seconds."
                         href="https://snapsteps.nrkgo.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-slate-300 transition-all duration-300 flex flex-col h-full"
-                    >
-                        {/* Card Image Placeholder / Gradient */}
-                        <div className="h-40 bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center p-6">
-                            <div className="bg-white/20 p-4 rounded-xl backdrop-blur-sm">
-                                <span className="material-symbols-outlined text-white text-5xl">screenshot_monitor</span>
-                            </div>
-                        </div>
-
-                        <div className="p-6 flex-1 flex flex-col">
-                            <div className="flex items-start justify-between mb-4">
-                                <div>
-                                    <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors">SnapSteps</h3>
-                                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mt-1">Productivity</p>
-                                </div>
-                                <span className="material-symbols-outlined text-slate-300 group-hover:text-blue-500 transition-colors">open_in_new</span>
-                            </div>
-
-                            <p className="text-slate-500 text-sm leading-relaxed mb-6 flex-1">
-                                Automatically document your workflows and create step-by-step guides in seconds.
-                            </p>
-
-                            <div className="flex items-center gap-2 mt-auto">
-                                <button className="w-full py-2.5 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium text-sm rounded-lg border border-slate-200 transition-colors flex items-center justify-center gap-2">
-                                    Launch App
-                                </button>
-                            </div>
-                        </div>
-                    </a>
+                        logo="https://snapsteps.nrkgo.com/assets/logo.png"
+                    />
                 </div>
             </div>
         </div>
