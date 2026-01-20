@@ -23,7 +23,7 @@ public class UserSession extends BaseEntity {
     @Column(nullable = false)
     private Long userId;
 
-    private Integer browser;
+    private String browser;
 
     private String cookie;
 
@@ -34,7 +34,7 @@ public class UserSession extends BaseEntity {
     @Column(nullable = false)
     private Integer status;
 
-    private Integer deviceOs;
+    private String deviceOs;
 
     @Column(nullable = false)
     private LocalDateTime expireTime;
@@ -51,8 +51,8 @@ public class UserSession extends BaseEntity {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public Integer getBrowser() { return browser; }
-    public void setBrowser(Integer browser) { this.browser = browser; }
+    public String getBrowser() { return browser; }
+    public void setBrowser(String browser) { this.browser = browser; }
 
     public String getCookie() { return cookie; }
     public void setCookie(String cookie) { this.cookie = cookie; }
@@ -66,8 +66,8 @@ public class UserSession extends BaseEntity {
     public Integer getStatus() { return status; }
     public void setStatus(Integer status) { this.status = status; }
 
-    public Integer getDeviceOs() { return deviceOs; }
-    public void setDeviceOs(Integer deviceOs) { this.deviceOs = deviceOs; }
+    public String getDeviceOs() { return deviceOs; }
+    public void setDeviceOs(String deviceOs) { this.deviceOs = deviceOs; }
 
     public LocalDateTime getExpireTime() { return expireTime; }
     public void setExpireTime(LocalDateTime expireTime) { this.expireTime = expireTime; }

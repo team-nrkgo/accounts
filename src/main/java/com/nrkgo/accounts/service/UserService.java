@@ -13,7 +13,7 @@ public interface UserService {
     
     User registerUser(SignupRequest request);
     
-    UserSession loginUser(LoginRequest request);
+    UserSession loginUser(LoginRequest request, jakarta.servlet.http.HttpServletRequest httpRequest);
     
     Integer checkUserStatus(String email);
     
@@ -21,11 +21,15 @@ public interface UserService {
 
     boolean validateSession(String token);
 
-    UserSession createSession(User user);
+    UserSession createSession(User user, jakarta.servlet.http.HttpServletRequest httpRequest);
     
     com.nrkgo.accounts.dto.InitResponse getInitData(Long userId, Long requestOrgId);
     
     User getUserBySession(String token);
     
     User updateUser(Long userId, com.nrkgo.accounts.dto.UpdateUserRequest request);
+
+    java.util.List<UserSession> getUserSessions(Long userId);
+    
+    void revokeSession(Long sessionId, Long userId);
 }

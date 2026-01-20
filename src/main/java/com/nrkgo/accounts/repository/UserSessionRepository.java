@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface UserSessionRepository extends JpaRepository<UserSession, Long> {
     Optional<UserSession> findByCookie(String cookie);
+    java.util.List<UserSession> findByUserIdAndStatus(Long userId, Integer status);
 }

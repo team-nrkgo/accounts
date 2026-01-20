@@ -1,8 +1,7 @@
-
 export default function Apps() {
     return (
-        <div className="px-10 py-8 w-full">
-            <div className="max-w-6xl mx-auto space-y-8">
+        <div className="w-full">
+            <div className="px-10 py-8 max-w-6xl mx-auto space-y-8">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">My Apps</h1>
                     <p className="text-slate-500 mt-2 text-sm">Access and manage your subscribed applications.</p>

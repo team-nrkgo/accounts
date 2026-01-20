@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserSession loginUser(LoginRequest request) {
+    public UserSession loginUser(LoginRequest request, jakarta.servlet.http.HttpServletRequest httpRequest) {
         log.info("Login attempt for: {}", request.getEmail());
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -160,12 +160,12 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Invalid email or password");
         }
 
-        return createSession(user);
+        return createSession(user, httpRequest);
     }
 
     @Override
     @Transactional
-    public UserSession createSession(User user) {
+    public UserSession createSession(User user, jakarta.servlet.http.HttpServletRequest httpRequest) {
         // Create User Session
         String token = com.nrkgo.accounts.common.util.TokenUtils.generateToken(); // Secure Token
         
@@ -175,6 +175,14 @@ public class UserServiceImpl implements UserService {
         session.setStatus(1); // Active
         session.setCookie(token);
         session.setExpireTime(LocalDateTime.now().plusDays(1)); // 1 day expiry
+
+        if (httpRequest != null) {
+            String userAgent = httpRequest.getHeader("User-Agent");
+            session.setMachineIp(com.nrkgo.accounts.common.util.DeviceUtil.getClientIp(httpRequest));
+            session.setBrowser(com.nrkgo.accounts.common.util.DeviceUtil.getBrowser(userAgent));
+            session.setDeviceOs(com.nrkgo.accounts.common.util.DeviceUtil.getOs(userAgent));
+            session.setDeviceName(com.nrkgo.accounts.common.util.DeviceUtil.getDeviceName(userAgent));
+        }
 
         return userSessionRepository.save(session);
     }
@@ -320,5 +328,29 @@ public class UserServiceImpl implements UserService {
         }
 
         return user;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<UserSession> getUserSessions(Long userId) {
+        return userSessionRepository.findByUserIdAndStatus(userId, 1).stream()
+                .filter(s -> s.getExpireTime().isAfter(LocalDateTime.now()))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void revokeSession(Long sessionId, Long userId) {
+        UserSession session = userSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Session not found"));
+        
+        if (!session.getUserId().equals(userId)) {
+            throw new SecurityException("Not authorized to revoke this session");
+        }
+        
+        session.setStatus(0); // Revoke
+        session.setModifiedBy(userId);
+        session.setModifiedTime(LocalDateTime.now());
+        userSessionRepository.save(session);
     }
 }

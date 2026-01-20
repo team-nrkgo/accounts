@@ -56,4 +56,33 @@ public class UserController {
         User updatedUser = userService.updateUser(user.getId(), updateRequest);
         return ResponseEntity.ok(ApiResponse.success("User profile updated", updatedUser));
     }
+
+    @GetMapping("/sessions")
+    public ResponseEntity<ApiResponse<java.util.List<com.nrkgo.accounts.model.UserSession>>> getSessions(HttpServletRequest request) {
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Active sessions fetched", userService.getUserSessions(user.getId())));
+    }
+
+    @DeleteMapping("/sessions")
+    public ResponseEntity<ApiResponse<String>> revokeSession(
+            HttpServletRequest request,
+            @RequestParam("session_id") Long sessionId) {
+        
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+        
+        try {
+            userService.revokeSession(sessionId, user.getId());
+            return ResponseEntity.ok(ApiResponse.success("Session revoked successfully", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

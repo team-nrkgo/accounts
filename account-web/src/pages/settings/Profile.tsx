@@ -69,7 +69,7 @@ export default function Profile() {
     };
 
     return (
-        <>
+        <div className="w-full">
             <div className="px-10 py-8 pb-32 w-full space-y-12">
 
                 <div className="max-w-4xl">
@@ -200,6 +200,6 @@ export default function Profile() {
                 onConfirm={handleExecuteDelete}
                 onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
             />
-        </>
+        </div>
     );
 }

@@ -32,8 +32,7 @@ public class CreateOrgRequest {
     public String getWebsite() { return website; }
     public void setWebsite(String website) { this.website = website; }
 
-    public String getMobile() { return mobile; }
-    public void setMobile(String mobile) { this.mobile = mobile; }
+  
 
     public String getEmployeeCount() { return employeeCount; }
     public void setEmployeeCount(String employeeCount) { this.employeeCount = employeeCount; }

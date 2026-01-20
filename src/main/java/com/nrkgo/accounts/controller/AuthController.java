@@ -22,11 +22,13 @@ public class AuthController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponse<User>> signup(@Valid @RequestBody SignupRequest request, jakarta.servlet.http.HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<User>> signup(@Valid @RequestBody SignupRequest request, 
+                                                  jakarta.servlet.http.HttpServletRequest httpRequest,
+                                                  jakarta.servlet.http.HttpServletResponse response) {
         User user = userService.registerUser(request);
         
         // Auto-Login: Create Session
-        UserSession session = userService.createSession(user);
+        UserSession session = userService.createSession(user, httpRequest);
         setCookie(response, session.getCookie());
 
         // In production, do not return password hash
@@ -35,8 +37,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserSession>> login(@Valid @RequestBody LoginRequest request, jakarta.servlet.http.HttpServletResponse response) {
-        UserSession session = userService.loginUser(request);
+    public ResponseEntity<ApiResponse<UserSession>> login(@Valid @RequestBody LoginRequest request, 
+                                                       jakarta.servlet.http.HttpServletRequest httpRequest,
+                                                       jakarta.servlet.http.HttpServletResponse response) {
+        UserSession session = userService.loginUser(request, httpRequest);
         setCookie(response, session.getCookie());
         return ResponseEntity.ok(ApiResponse.success("Login successful", session));
     }

@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/settings/Profile';
 import Organization from './pages/settings/Organization';
+import Security from './pages/settings/Security';
 import Apps from './pages/Apps';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuth } from './context/AuthContext';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/apps" element={<Apps />} />
           <Route path="/settings/profile" element={<Profile />} />
           <Route path="/settings/organization" element={<Organization />} /> {/* Added Organization Route */}
+          <Route path="/settings/security" element={<Security />} />
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" />} />
         </Route>
