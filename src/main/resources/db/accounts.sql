@@ -25,8 +25,12 @@ CREATE TABLE IF NOT EXISTS users (
 -- 2. Roles Table
 CREATE TABLE IF NOT EXISTS roles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE, -- e.g., ROLE_ADMIN, ROLE_USER
+    name VARCHAR(50) NOT NULL, -- e.g., ROLE_ADMIN, ROLE_USER (Unique constraint removed to allow same name in diff orgs? existing UNIQUE on name global. We need to relax it or make it unique per org?)
+    -- Ideally unique(org_id, name). For now lets remove global unique on name if we want custom roles.
+    -- But existing schema has UNIQUE on name.
+    -- I will drop the UNIQUE constraint on name and make it (org_id, name) or handle in logic.
     description VARCHAR(255),
+    org_id BIGINT,
     created_by BIGINT,
     created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     modified_by BIGINT,
@@ -46,6 +50,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     org_type INT, 
     website VARCHAR(255),
     employee_count VARCHAR(255),
+    mobile VARCHAR(50),
     description TEXT,
     application_name VARCHAR(255),
     app_icon_dark BIGINT,

@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/settings/Profile';
 import Organization from './pages/settings/Organization';
+import Apps from './pages/Apps';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuth } from './context/AuthContext';
 
@@ -43,6 +44,7 @@ function App() {
         {/* Protected Dashboard Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<DashboardPlaceholder />} />
+          <Route path="/apps" element={<Apps />} />
           <Route path="/settings/profile" element={<Profile />} />
           <Route path="/settings/organization" element={<Organization />} /> {/* Added Organization Route */}
           {/* Fallback */}

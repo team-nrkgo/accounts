@@ -3,26 +3,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { toast } from '@/lib/toast-event';
 import api from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
 
-interface InviteMemberModalProps {
+interface EditMemberModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onInviteSuccess: () => void;
+    onSuccess: () => void;
+    member: any; // Using any for simplicity matching member structure from Organization.tsx
+    orgId: number;
 }
 
-interface Role {
-    id: number;
-    name: string;
-}
-
-import { toast } from '@/lib/toast-event';
-
-export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: InviteMemberModalProps) {
-    const { currentOrg } = useAuth();
+export default function EditMemberModal({ isOpen, onClose, onSuccess, member, orgId }: EditMemberModalProps) {
     const [isLoading, setIsLoading] = useState(false);
-    const [roles, setRoles] = useState<Role[]>([]);
+    const [roles, setRoles] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -32,26 +26,32 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
     });
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && member) {
+            setFormData({
+                firstName: member.firstName || '',
+                lastName: member.lastName || '',
+                email: member.userEmail || '',
+                designation: member.designation || '',
+                roleId: member.roleId ? String(member.roleId) : '',
+            });
+
+            // Fetch Roles
             fetchRoles();
         }
-    }, [isOpen]);
+    }, [isOpen, member]);
 
     const fetchRoles = async () => {
         try {
-            const response = await api.get('/roles');
+            const response = await api.get(`/orgs/roles?org_id=${orgId}`);
             if (response.data.success) {
                 setRoles(response.data.data);
-                if (response.data.data.length > 0) {
-                    setFormData(prev => ({ ...prev, roleId: response.data.data[0].id.toString() }));
-                }
             }
         } catch (error) {
             console.error("Failed to fetch roles", error);
         }
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !member) return null;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -63,22 +63,20 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
 
         try {
             const payload = {
+                member_id: member.id,
+                org_id: orgId,
                 first_name: formData.firstName,
                 last_name: formData.lastName,
-                email: formData.email,
                 designation: formData.designation,
-                role_id: Number(formData.roleId),
-                org_id: currentOrg?.id
+                role_id: formData.roleId ? parseInt(formData.roleId) : undefined
             };
 
-            await api.post('/orgs/invite', payload);
-            toast.success('Invitation sent successfully!');
-            onInviteSuccess();
+            await api.put('/orgs/member', payload);
+            toast.success('Member updated successfully!');
+            onSuccess();
             onClose();
         } catch (error) {
-            console.error("Invite failed", error);
-            // Global error handler in api.ts will handle 400 validation errors
-            // We can add a fallback here if needed, but for now removing the alert is priority
+            console.error("Update failed", error);
         } finally {
             setIsLoading(false);
         }
@@ -94,26 +92,25 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
                     <span className="material-symbols-outlined text-xl">close</span>
                 </button>
 
-                <CardHeader className="pt-8 pb-6 px-8 text-center">
-                    <CardTitle className="text-2xl font-bold text-slate-900">Invite new member!</CardTitle>
+                <CardHeader className="pt-8 pb-6 px-8 text-center align-left items-start">
+                    <CardTitle className="text-2xl font-bold text-slate-900 text-left">Edit Member</CardTitle>
                 </CardHeader>
 
                 <CardContent className="px-8 pb-8">
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="firstName" className="text-xs font-medium text-slate-500 uppercase tracking-wide">First name*</Label>
+                                <Label htmlFor="firstName" className="text-xs font-medium text-slate-500 uppercase tracking-wide">First Name</Label>
                                 <Input
                                     id="firstName"
                                     name="firstName"
                                     value={formData.firstName}
                                     onChange={handleChange}
-                                    required
                                     className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 transition-colors"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lastName" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Last name</Label>
+                                <Label htmlFor="lastName" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Last Name</Label>
                                 <Input
                                     id="lastName"
                                     name="lastName"
@@ -125,15 +122,12 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email*</Label>
+                            <Label htmlFor="email" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</Label>
                             <Input
                                 id="email"
-                                name="email"
-                                type="email"
                                 value={formData.email}
-                                onChange={handleChange}
-                                required
-                                className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 transition-colors"
+                                disabled
+                                className="h-11 bg-slate-50/50 border-slate-200 text-slate-500 cursor-not-allowed"
                             />
                         </div>
 
@@ -144,28 +138,27 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
                                 name="designation"
                                 value={formData.designation}
                                 onChange={handleChange}
+                                placeholder="e.g. Senior Developer"
                                 className="h-11 bg-slate-50 border-slate-200 focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 transition-colors"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="roleId" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Role*</Label>
-                            <div className="relative">
-                                <select
-                                    id="roleId"
-                                    name="roleId"
-                                    value={formData.roleId}
-                                    onChange={handleChange}
-                                    className="flex h-11 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-blue-600/20 disabled:cursor-not-allowed disabled:opacity-50 appearance-none"
-                                >
-                                    {roles.map(role => (
-                                        <option key={role.id} value={role.id}>{role.name}</option>
-                                    ))}
-                                </select>
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                    <span className="material-symbols-outlined text-lg">expand_more</span>
-                                </span>
-                            </div>
+                            <Label htmlFor="roleId" className="text-xs font-medium text-slate-500 uppercase tracking-wide">Role</Label>
+                            <select
+                                id="roleId"
+                                name="roleId"
+                                value={formData.roleId}
+                                onChange={handleChange}
+                                className="h-11 w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-blue-600/20 focus:ring-2 outline-none transition-all appearance-none"
+                            >
+                                <option value="" disabled>Select Role</option>
+                                {roles.map((r) => (
+                                    <option key={r.id} value={r.id}>
+                                        {r.name} {r.orgId ? '(Custom)' : ''}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
 
                         <Button
@@ -173,7 +166,7 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
                             className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl mt-4 text-base shadow-lg shadow-blue-600/20"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Sending...' : 'Invite Now'}
+                            {isLoading ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </form>
                 </CardContent>

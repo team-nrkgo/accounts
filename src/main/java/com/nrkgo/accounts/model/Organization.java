@@ -34,6 +34,8 @@ public class Organization extends BaseEntity {
 
     private String employeeCount;
 
+    private String mobile;
+    
     private String description;
 
     private String applicationName;
@@ -63,6 +65,9 @@ public class Organization extends BaseEntity {
     
     public String getEmployeeCount() { return employeeCount; }
     public void setEmployeeCount(String employeeCount) { this.employeeCount = employeeCount; }
+
+    public String getMobile() { return mobile; }
+    public void setMobile(String mobile) { this.mobile = mobile; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

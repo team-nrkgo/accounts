@@ -3,7 +3,7 @@ package com.nrkgo.accounts.dto;
 import java.time.LocalDateTime;
 
 public class OrgMemberResponse {
-    private Long id; // User ID
+    private Long id; // OrgUser ID
     private String userEmail;
     private String roleName;
     private String designation;
@@ -11,10 +11,11 @@ public class OrgMemberResponse {
     private String lastName;
     private Integer status; // 1: Active, 0: Pending
     private LocalDateTime createdTime;
+    private Long roleId;
 
     public OrgMemberResponse() {}
 
-    public OrgMemberResponse(Long id, String userEmail, String roleName, String designation, String firstName, String lastName, Integer status, LocalDateTime createdTime) {
+    public OrgMemberResponse(Long id, String userEmail, String roleName, String designation, String firstName, String lastName, Integer status, LocalDateTime createdTime, Long roleId) {
         this.id = id;
         this.userEmail = userEmail;
         this.roleName = roleName;
@@ -23,7 +24,11 @@ public class OrgMemberResponse {
         this.lastName = lastName;
         this.status = status;
         this.createdTime = createdTime;
+        this.roleId = roleId;
     }
+    
+    public Long getRoleId() { return roleId; }
+    public void setRoleId(Long roleId) { this.roleId = roleId; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

@@ -18,10 +18,13 @@ public class Role extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name; // e.g., ROLE_ADMIN, ROLE_USER
 
     private String description;
+    
+    @Column(name = "org_id")
+    private Long orgId; // Null for system roles, OrgID for custom roles
 
     // Manual Accessors
     public Long getId() { return id; }
@@ -32,4 +35,7 @@ public class Role extends BaseEntity {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public Long getOrgId() { return orgId; }
+    public void setOrgId(Long orgId) { this.orgId = orgId; }
 }

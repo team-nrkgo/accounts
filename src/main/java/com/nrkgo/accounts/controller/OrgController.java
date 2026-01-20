@@ -53,7 +53,7 @@ public class OrgController {
         return ResponseEntity.ok(ApiResponse.success("Organization created", org));
     }
 
-    @PostMapping("/update")
+    @PutMapping
     public ResponseEntity<ApiResponse<Organization>> updateOrganization(
             @Valid @RequestBody com.nrkgo.accounts.dto.CreateOrgRequest request,
             HttpServletRequest httpRequest) {
@@ -95,7 +95,6 @@ public class OrgController {
         }
         
         orgService.acceptInvite(token, user.getId());
-        orgService.acceptInvite(token, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Invitation accepted", null));
     }
 
@@ -113,4 +112,85 @@ public class OrgController {
         java.util.List<com.nrkgo.accounts.dto.OrgMemberResponse> members = orgService.getOrgMembers(org_id, user.getId(), search);
         return ResponseEntity.ok(ApiResponse.success("Members fetched", members));
     }
+
+    @PutMapping("/member")
+    public ResponseEntity<ApiResponse<Void>> updateMember(
+            @Valid @RequestBody com.nrkgo.accounts.dto.UpdateMemberRequest request,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+
+        orgService.updateMember(request, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Member updated", null));
+    }
+
+    @DeleteMapping("/member")
+    public ResponseEntity<ApiResponse<Void>> removeMember(
+            @RequestParam Long org_id,
+            @RequestParam Long member_id,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+
+        orgService.removeMember(org_id, member_id, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Member removed", null));
+    }
+
+    // --- Role Management Endpoints ---
+
+    @GetMapping("/roles")
+    public ResponseEntity<ApiResponse<java.util.List<com.nrkgo.accounts.model.Role>>> getOrgRoles(
+            @RequestParam Long org_id,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+
+        return ResponseEntity.ok(ApiResponse.success("Roles fetched", orgService.getOrgRoles(org_id)));
+    }
+
+    @PostMapping("/roles")
+    public ResponseEntity<ApiResponse<com.nrkgo.accounts.model.Role>> createRole(
+            @RequestParam Long org_id,
+            @Valid @RequestBody com.nrkgo.accounts.dto.RoleRequest request,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+
+        return ResponseEntity.ok(ApiResponse.success("Role created", orgService.createOrgRole(request, org_id, user.getId())));
+    }
+
+    @PutMapping("/roles/{roleId}")
+    public ResponseEntity<ApiResponse<com.nrkgo.accounts.model.Role>> updateRole(
+            @PathVariable Long roleId,
+            @RequestParam Long org_id,
+            @Valid @RequestBody com.nrkgo.accounts.dto.RoleRequest request,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+
+        return ResponseEntity.ok(ApiResponse.success("Role updated", orgService.updateOrgRole(roleId, request, org_id, user.getId())));
+    }
+
+    @DeleteMapping("/roles/{roleId}")
+    public ResponseEntity<ApiResponse<Void>> deleteRole(
+            @PathVariable Long roleId,
+            @RequestParam Long org_id,
+            HttpServletRequest httpRequest) {
+
+        User user = getAuthenticatedUser(httpRequest);
+        if (user == null) return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+
+        orgService.removeOrgRole(roleId, org_id, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Role deleted", null));
+    }
 }
+

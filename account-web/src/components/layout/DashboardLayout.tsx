@@ -47,14 +47,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 <nav className="flex-1 px-4 space-y-1">
                     <p className="text-[11px] uppercase tracking-widest font-bold text-slate-400 mb-4 px-4 mt-6">PRODUCTS</p>
-                    <SidebarItem icon="dashboard" label="Dashboard" href="/" active={isActive('/')} />
+                    {/* <SidebarItem icon="dashboard" label="Dashboard" href="/" active={isActive('/')} /> */}
                     <SidebarItem icon="apps" label="My Apps" href="/apps" active={isActive('/apps')} />
 
                     <p className="text-[11px] uppercase tracking-widest font-bold text-slate-400 mb-4 px-4 mt-8">Account</p>
                     <SidebarItem icon="person" label="Profile" href="/settings/profile" active={isActive('/settings/profile')} />
                     <SidebarItem icon="corporate_fare" label="Organization" href="/settings/organization" active={isActive('/settings/organization')} />
                     <SidebarItem icon="security" label="Security" href="/settings/security" active={isActive('/settings/security')} />
-                    <SidebarItem icon="credit_card" label="Billing" href="/settings/billing" active={isActive('/settings/billing')} />
+                    {/* <SidebarItem icon="credit_card" label="Billing" href="/settings/billing" active={isActive('/settings/billing')} /> */}
                 </nav>
 
                 <div className="p-6 border-t border-white/5 mt-auto">
@@ -72,20 +72,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <main className="flex-1 ml-64 flex flex-col min-h-screen">
                 {/* Sticky Header */}
                 <header className="h-16 flex items-center justify-between px-10 sticky top-0 bg-slate-50/80 backdrop-blur-md z-20">
-                    <div className="flex items-center gap-2 text-[13px] text-slate-500">
+                    {/* <div className="flex items-center gap-2 text-[13px] text-slate-500">
                         <span>Settings</span>
                         <span className="material-symbols-outlined text-sm">chevron_right</span>
                         <span className="text-slate-900 font-medium">Profile Settings</span>
-                    </div>
+                    </div> */}
+                    <div></div>
 
                     <div className="flex items-center gap-6">
-                        <button className="text-slate-400 hover:text-slate-900 transition-colors">
+                        {/* <button className="text-slate-400 hover:text-slate-900 transition-colors">
                             <span className="material-symbols-outlined">search</span>
                         </button>
                         <button className="text-slate-400 hover:text-slate-900 transition-colors relative">
                             <span className="material-symbols-outlined">notifications</span>
                             <span className="absolute -top-1 -right-1 size-2 bg-primary rounded-full ring-2 ring-slate-50"></span>
-                        </button>
+                        </button> */}
                         <div className="size-8 rounded-full bg-slate-200 overflow-hidden ring-1 ring-slate-200">
                             <div className="w-full h-full bg-slate-300 flex items-center justify-center text-slate-500 font-bold">
                                 {user?.first_name?.charAt(0) || 'U'}

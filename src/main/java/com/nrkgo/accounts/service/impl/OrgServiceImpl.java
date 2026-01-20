@@ -9,6 +9,8 @@ import com.nrkgo.accounts.repository.DigestRepository;
 import com.nrkgo.accounts.repository.OrgUserRepository;
 import com.nrkgo.accounts.repository.OrganizationRepository;
 import com.nrkgo.accounts.repository.UserRepository;
+import com.nrkgo.accounts.repository.RoleRepository;
+import com.nrkgo.accounts.model.Role;
 import com.nrkgo.accounts.service.OrgService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,16 +29,19 @@ public class OrgServiceImpl implements OrgService {
     private final OrgUserRepository orgUserRepository;
     private final DigestRepository digestRepository;
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
 
     // Manual Constructor for DI
     public OrgServiceImpl(OrganizationRepository organizationRepository,
                           OrgUserRepository orgUserRepository,
                           DigestRepository digestRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          RoleRepository roleRepository) {
         this.organizationRepository = organizationRepository;
         this.orgUserRepository = orgUserRepository;
         this.digestRepository = digestRepository;
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
     }
 
     @Override
@@ -84,10 +89,20 @@ public class OrgServiceImpl implements OrgService {
         return organizationRepository.save(org);
     }
 
-    @Override
+     
+     @Override
     @Transactional
     public Digest inviteUser(InviteUserRequest request, Long inviterId) {
         Long orgId = request.getOrgId();
+        
+        // Validate Role
+        if (request.getRoleId() != null) {
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid Role ID"));
+            if (role.getOrgId() != null && !role.getOrgId().equals(orgId)) {
+                throw new IllegalArgumentException("Role does not belong to this organization");
+            }
+        }
         
         // 1. Check if user exists
         Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
@@ -152,6 +167,13 @@ public class OrgServiceImpl implements OrgService {
         
         return digestRepository.save(digest);
     }
+    
+    // ... (acceptInvite, getOrgMembers omitted for brevity in tool replacement if not modifying them, but I need to reach updateMember)
+    // Wait, replacing chunks. I should use MultiReplace or just replace separate chunks.
+    // I will use replace_file_content for inviteUser first.
+    // Then another call for updateMember to avoid context matching issues with large chunks.
+    
+    // Actually I'll split it. This call is for inviteUser.
 
     @Override
     @Transactional
@@ -191,6 +213,11 @@ public class OrgServiceImpl implements OrgService {
 
     @Override
     public java.util.List<com.nrkgo.accounts.dto.OrgMemberResponse> getOrgMembers(Long orgId, Long userId, String search) {
+        // ... (existing code, keeping it here for context if needed, but tool replaces contiguous block)
+        // actually tool replaces block. I need to be careful. I will just append the new methods effectively.
+        // Wait, replace_file_content replaces a block.
+        // I will target the end of the file or just after getOrgMembers.
+        
         // 1. Check if requester is a member of the org
         if (!orgUserRepository.existsByOrgIdAndUserId(orgId, userId)) {
             throw new IllegalArgumentException("Access denied: You are not a member of this organization");
@@ -202,5 +229,156 @@ public class OrgServiceImpl implements OrgService {
         } else {
             return orgUserRepository.findMembersByOrgId(orgId);
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateMember(com.nrkgo.accounts.dto.UpdateMemberRequest request, Long requesterId) {
+        // 1. Verify Requester
+        OrgUser requester = orgUserRepository.findByOrgIdAndUserId(request.getOrgId(), requesterId)
+                .orElseThrow(() -> new IllegalArgumentException("Access denied"));
+        
+        // 2. Find Target Member (OrgUser)
+        OrgUser targetOrgUser = orgUserRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        if (!targetOrgUser.getOrgId().equals(request.getOrgId())) {
+             throw new IllegalArgumentException("Member does not belong to this organization");
+        }
+
+        // 3. Update Org Data (Designation & Role)
+        if (request.getDesignation() != null) {
+            targetOrgUser.setDesignation(request.getDesignation());
+        }
+        
+        if (request.getRoleId() != null) {
+            // Validate Role
+            Role role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid Role ID"));
+            if (role.getOrgId() != null && !role.getOrgId().equals(request.getOrgId())) {
+                throw new IllegalArgumentException("Role does not belong to this organization");
+            }
+            
+            // Allow role change
+            targetOrgUser.setRoleId(request.getRoleId());
+        }
+        
+        targetOrgUser.setModifiedBy(requesterId);
+        targetOrgUser.setModifiedTime(LocalDateTime.now());
+        orgUserRepository.save(targetOrgUser);
+
+        // 4. Update User Data (Name)
+        User targetUser = userRepository.findById(targetOrgUser.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        
+        if (request.getFirstName() != null) targetUser.setFirstName(request.getFirstName());
+        if (request.getLastName() != null) targetUser.setLastName(request.getLastName());
+        
+        userRepository.save(targetUser);
+    }
+
+    @Override
+    @Transactional
+    public void removeMember(Long orgId, Long memberId, Long requesterId) {
+         // 1. Verify Requester
+        if (!orgUserRepository.existsByOrgIdAndUserId(orgId, requesterId)) {
+            throw new IllegalArgumentException("Access denied");
+        }
+        
+        // 2. Find Target
+        OrgUser targetOrgUser = orgUserRepository.findById(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        if (!targetOrgUser.getOrgId().equals(orgId)) {
+             throw new IllegalArgumentException("Member does not belong to this organization");
+        }
+
+        // 3. Super Admin Guard
+        Role role = roleRepository.findById(targetOrgUser.getRoleId()).orElse(null);
+        if (role != null && (role.getName().equalsIgnoreCase("Admin") || role.getName().equalsIgnoreCase("Super Admin"))) {
+             long adminCount = orgUserRepository.countByOrgIdAndRoleId(orgId, role.getId());
+             if (adminCount <= 1) {
+                 throw new IllegalArgumentException("Organization must have at least one " + role.getName());
+             }
+        }
+        
+        // 4. Delete
+        orgUserRepository.delete(targetOrgUser);
+    }
+
+    // --- Role Management ---
+
+    @Override
+    public java.util.List<Role> getOrgRoles(Long orgId) {
+        return roleRepository.findAllGlobalAndOrgRoles(orgId);
+    }
+
+    @Override
+    @Transactional
+    public Role createOrgRole(com.nrkgo.accounts.dto.RoleRequest request, Long orgId, Long requesterId) {
+        // 1. Verify Permission (Requester must be Admin/Super Admin)
+        if (!orgUserRepository.existsByOrgIdAndUserId(orgId, requesterId)) {
+             throw new IllegalArgumentException("Access denied");
+        }
+        
+        // 2. Check duplicate name in this Org
+        if (roleRepository.existsByNameAndOrgId(request.getName(), orgId)) {
+             throw new IllegalArgumentException("Role with this name already exists in organization");
+        }
+
+        Role role = new Role();
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        role.setOrgId(orgId);
+        
+        // Audit
+        role.setCreatedBy(requesterId);
+        role.setModifiedBy(requesterId);
+        role.setCreatedTime(LocalDateTime.now());
+        role.setModifiedTime(LocalDateTime.now());
+        
+        return roleRepository.save(role);
+    }
+
+    @Override
+    @Transactional
+    public Role updateOrgRole(Long roleId, com.nrkgo.accounts.dto.RoleRequest request, Long orgId, Long requesterId) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+
+        if (role.getOrgId() == null) {
+            throw new IllegalArgumentException("Cannot edit system roles");
+        }
+        if (!role.getOrgId().equals(orgId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+        
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        role.setModifiedBy(requesterId);
+        role.setModifiedTime(LocalDateTime.now());
+        
+        return roleRepository.save(role);
+    }
+
+    @Override
+    @Transactional
+    public void removeOrgRole(Long roleId, Long orgId, Long requesterId) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
+
+        if (role.getOrgId() == null) {
+            throw new IllegalArgumentException("Cannot delete system roles");
+        }
+        if (!role.getOrgId().equals(orgId)) {
+            throw new IllegalArgumentException("Role does not belong to this organization");
+        }
+        
+        long usageCount = orgUserRepository.countByOrgIdAndRoleId(orgId, roleId);
+        if (usageCount > 0) {
+            throw new IllegalArgumentException("Cannot delete role: It is assigned to " + usageCount + " users.");
+        }
+
+        roleRepository.delete(role);
     }
 }

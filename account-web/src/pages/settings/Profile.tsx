@@ -1,6 +1,8 @@
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
 import api from '@/lib/api';
+import { toast } from '@/lib/toast-event';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 export default function Profile() {
     const { user, refreshUser } = useAuth();
@@ -11,8 +13,28 @@ export default function Profile() {
         mobile_number: user?.mobile_number || '', // Assuming context user has this
     });
 
+    const [confirmState, setConfirmState] = useState<{
+        isOpen: boolean;
+        type: 'delete-account' | null;
+        title: string;
+        message: string;
+    }>({
+        isOpen: false,
+        type: null,
+        title: '',
+        message: ''
+    });
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === 'mobile_number') {
+            // Basic mobile chars validation (digits, +, -, space, brackets)
+            if (value === '' || /^[\d+\-\s()]*$/.test(value)) {
+                setFormData(prev => ({ ...prev, [name]: value }));
+            }
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const handleSave = async () => {
@@ -20,13 +42,30 @@ export default function Profile() {
         try {
             await api.put('/user', formData); // Correct endpoint based on UserController using PUT
             await refreshUser(); // Refresh context to show new name in header
-            alert("Profile updated successfully!"); // SImple feedback for now
+            toast.success("Profile updated successfully");
         } catch (e) {
             console.error("Failed to save", e);
-            alert("Failed to update profile. Please try again.");
+            toast.error("Failed to update profile. Please try again.");
         } finally {
             setIsSaving(false);
         }
+    };
+
+    const handleDeleteAccountClick = () => {
+        setConfirmState({
+            isOpen: true,
+            type: 'delete-account',
+            title: 'Delete Account?',
+            message: 'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.'
+        });
+    };
+
+    const handleExecuteDelete = async () => {
+        // Implementation for delete account would go here
+        // For now just close dialog and show toast
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        toast.error("Account deletion is not yet implemented.");
+        // TODO: Call api.delete('/user') etc.
     };
 
     return (
@@ -122,7 +161,10 @@ export default function Profile() {
                                 Once you delete your account, there is no going back. Please be certain. All data, files and history will be permanently erased.
                             </p>
                         </div>
-                        <button className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                        <button
+                            onClick={handleDeleteAccountClick}
+                            className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all whitespace-nowrap"
+                        >
                             Delete Account
                         </button>
                     </div>
@@ -147,6 +189,17 @@ export default function Profile() {
                     </button>
                 </div>
             </footer>
+
+            <ConfirmDialog
+                isOpen={confirmState.isOpen}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText="Delete Account"
+                cancelText="Cancel"
+                type="danger"
+                onConfirm={handleExecuteDelete}
+                onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+            />
         </>
     );
 }
