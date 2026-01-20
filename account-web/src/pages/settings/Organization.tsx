@@ -23,6 +23,7 @@ interface Member {
     designation: string | null;
     status: number; // 1: Active, 0: Pending
     createdTime: string; // ISO string
+    inviteToken?: string;
     avatar_initials?: string;
     avatar_color?: string;
 }
@@ -164,6 +165,7 @@ export default function Organization() {
                     designation: m.designation,
                     status: m.status,
                     createdTime: m.created_time,
+                    inviteToken: m.invite_token || m.inviteToken,
                     avatar_initials: getInitials(m.first_name || '', m.last_name),
                     avatar_color: AVATAR_COLORS[index % AVATAR_COLORS.length]
                 }));
@@ -359,7 +361,24 @@ export default function Organization() {
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-2">
                                                             <span className={cn("h-1.5 w-1.5 rounded-full", member.status === 1 ? "bg-emerald-500" : "bg-amber-500")}></span>
-                                                            <span className="text-sm text-slate-600 font-medium">{member.status === 1 ? 'Active' : 'Pending'}</span>
+                                                            {member.status === 1 ? (
+                                                                <span className="text-sm text-slate-600 font-medium">Active</span>
+                                                            ) : (
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm text-blue-600 font-semibold tracking-tight">Pending Invite</span>
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const url = `${window.location.origin}/invitations?token=${member.inviteToken}`;
+                                                                            navigator.clipboard.writeText(url);
+                                                                            toast.success("Invitation link copied!");
+                                                                        }}
+                                                                        className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors"
+                                                                        title="Copy invite link"
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                                                                    </button>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
@@ -588,7 +607,6 @@ export default function Organization() {
                     isOpen={isInviteModalOpen}
                     onClose={() => setIsInviteModalOpen(false)}
                     onSuccess={fetchMembers}
-                    orgId={currentOrg?.id}
                 />
 
                 <EditMemberModal

@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 interface InviteMemberModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onInviteSuccess: () => void;
+    onSuccess: () => void;
 }
 
 interface Role {
@@ -19,7 +19,7 @@ interface Role {
 
 import { toast } from '@/lib/toast-event';
 
-export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: InviteMemberModalProps) {
+export default function InviteMemberModal({ isOpen, onClose, onSuccess }: InviteMemberModalProps) {
     const { currentOrg } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [roles, setRoles] = useState<Role[]>([]);
@@ -71,14 +71,18 @@ export default function InviteMemberModal({ isOpen, onClose, onInviteSuccess }: 
                 org_id: currentOrg?.id
             };
 
-            await api.post('/orgs/invite', payload);
-            toast.success('Invitation sent successfully!');
-            onInviteSuccess();
-            onClose();
-        } catch (error) {
+            const response = await api.post('/orgs/invite', payload);
+            if (response.data.success) {
+                toast.success('Invitation sent successfully!');
+                onSuccess();
+                onClose();
+            } else {
+                toast.error(response.data.message || "Invitation failed.");
+            }
+        } catch (error: any) {
             console.error("Invite failed", error);
-            // Global error handler in api.ts will handle 400 validation errors
-            // We can add a fallback here if needed, but for now removing the alert is priority
+            // If api.ts didn't catch it
+            toast.error(error.response?.data?.message || "Something went wrong.");
         } finally {
             setIsLoading(false);
         }
