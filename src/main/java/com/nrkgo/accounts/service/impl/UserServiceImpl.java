@@ -407,6 +407,71 @@ public class UserServiceImpl implements UserService {
         sendVerificationEmail(user);
     }
 
+    @Override
+    @Transactional
+    public void initiatePasswordReset(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User with this email does not exist"));
+
+        // Generate Token
+        String token = java.util.UUID.randomUUID().toString();
+        com.nrkgo.accounts.model.Digest digest = new com.nrkgo.accounts.model.Digest();
+        digest.setEntityType("PASSWORD_RESET");
+        digest.setEntityId(String.valueOf(user.getId()));
+        digest.setToken(token);
+        digest.setMetadata(user.getEmail());
+        digest.setExpiryTime(System.currentTimeMillis() + 3600000L); // 1 hour
+        digest.setCreatedBy(user.getId());
+        digest.setModifiedBy(user.getId());
+        digest.setCreatedTime(System.currentTimeMillis());
+        digest.setModifiedTime(System.currentTimeMillis());
+        
+        digestRepository.save(digest);
+
+        // Send Email
+        try {
+            String resetLink = "http://localhost:5173/reset-password?token=" + token;
+            String userName = user.getFirstName() != null ? user.getFirstName() : "User";
+            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getPasswordResetEmailTemplate(resetLink, userName);
+             
+            mailService.sendEmail(user.getEmail(), "Reset your password", emailBody, true);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to: {}", user.getEmail(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        com.nrkgo.accounts.model.Digest digest = digestRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired password reset token"));
+
+        if (!"PASSWORD_RESET".equals(digest.getEntityType())) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        if (digest.getExpiryTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException("Token expired");
+        }
+
+        Long userId = Long.parseLong(digest.getEntityId());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Update Password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setModifiedBy(userId);
+        user.setModifiedTime(System.currentTimeMillis());
+        userRepository.save(user);
+
+        // Invalidate Token
+        digestRepository.delete(digest);
+        
+        // Optional: Invalidate all existing sessions? 
+        // For now, let's keep them active or we could check policy. 
+        // Usually good practice to revoke, but keeping simple for this request.
+    }
+
     private void sendVerificationEmail(User user) {
         try {
             // Invalidate/Delete old tokens for this user?

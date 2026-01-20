@@ -100,4 +100,65 @@ public class EmailTemplateConfig {
                "</body>" +
                "</html>";
     }
+    public static String getPasswordResetEmailTemplate(String resetLink, String userName) {
+        return "<!DOCTYPE html>" +
+               "<html>" +
+               "<head>" +
+               "<style>" +
+               "body { width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }" +
+               ".ExternalClass { width: 100%; }" +
+               "img { outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }" +
+               "a img { border: none; }" +
+               "</style>" +
+               "</head>" +
+               "<body style='margin: 0; padding: 0; background-color: #f4f4f4;'>" +
+               "<table border='0' cellpadding='0' cellspacing='0' width='100%'>" +
+               "<tr>" +
+               "<td style='padding: 20px 0; background-color: #f4f4f4;' align='center'>" +
+               
+               "<!-- Container -->" +
+               "<table border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); overflow: hidden;'>" +
+               
+               "<!-- Header -->" +
+               "<tr>" +
+               "<td align='center' style='padding: 30px 20px; border-bottom: 1px solid #eeeeee;'>" +
+               "<h2 style='margin: 0; color: #333333; font-size: 24px; font-weight: 600;'>NRKGo Accounts</h2>" +
+               "</td>" +
+               "</tr>" +
+               
+               "<!-- Content -->" +
+               "<tr>" +
+               "<td style='padding: 40px 30px; color: #333333; line-height: 1.6; font-size: 16px;'>" +
+               "<p style='margin: 0 0 20px 0;'>Hi " + userName + ",</p>" +
+               "<p style='margin: 0 0 20px 0;'>We received a request to reset your password. If you didn't make the request, just ignore this email.</p>" +
+               "<p style='margin: 0 0 20px 0;'>Otherwise, you can reset your password using this link:</p>" +
+               
+               "<!-- Button -->" +
+               "<table border='0' cellpadding='0' cellspacing='0' width='100%'>" +
+               "<tr>" +
+               "<td align='center'>" +
+               "<a href='" + resetLink + "' style='background-color: #d93025; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; font-size: 16px;'>Reset Password</a>" +
+               "</td>" +
+               "</tr>" +
+               "</table>" +
+               
+               "<p style='margin: 30px 0 0 0; font-size: 14px; color: #666666;'>This link will expire in 1 hour.</p>" +
+               "</td>" +
+               "</tr>" +
+               
+               "<!-- Footer -->" +
+               "<tr>" +
+               "<td style='background-color: #f9f9f9; padding: 20px; text-align: center; color: #888888; font-size: 12px;'>" +
+               "<p style='margin: 0;'>&copy; 2026 NRKGo. All rights reserved.</p>" +
+               "</td>" +
+               "</tr>" +
+               
+               "</table>" +
+               
+               "</td>" +
+               "</tr>" +
+               "</table>" +
+               "</body>" +
+               "</html>";
+    }
 }

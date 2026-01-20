@@ -36,4 +36,8 @@ public interface UserService {
     com.nrkgo.accounts.model.User verifyUser(String token);
     
     void resendVerificationEmail(String email);
+
+    void initiatePasswordReset(String email);
+
+    void resetPassword(String token, String newPassword);
 }

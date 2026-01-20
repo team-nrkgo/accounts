@@ -140,6 +140,18 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<String>> forgotPassword(@Valid @RequestBody com.nrkgo.accounts.dto.ForgotPasswordRequest request) {
+        userService.initiatePasswordReset(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success("If an account exists with this email, a password reset link has been sent.", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<String>> resetPassword(@Valid @RequestBody com.nrkgo.accounts.dto.ResetPasswordRequest request) {
+        userService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully. Please login with your new password.", null));
+    }
+
     private void setCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("user_session", token);
         cookie.setHttpOnly(true);

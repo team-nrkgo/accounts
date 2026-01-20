@@ -31,14 +31,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
+    public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        StringBuilder errorMsg = new StringBuilder("Validation Failed: ");
         ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errors.put(error.getField(), error.getDefaultMessage()));
+            errorMsg.append(error.getField()).append(" ").append(error.getDefaultMessage()).append("; "));
         
         return ResponseEntity.badRequest()
-                .body(ApiResponse.success("Validation Failed", errors)); // Using success=false structure generically or custom logic? 
-                                                                         // Actually, standard error response is better.
+                .body(ApiResponse.error(errorMsg.toString().trim()));
     }
     
     // Helper to keep MethodArgumentNotValidException consistent with ApiResponse structure if needed
