@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Premium SaaS Profile Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0061FF",
+                        "sidebar-bg": "#0F172A", // Deep slate-grey
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply font-sans antialiased;
+            }
+        }
+        .sidebar-item-active {
+            @apply bg-white/10 text-white;
+        }
+        .section-header {
+            @apply text-[11px] uppercase tracking-widest font-bold text-slate-400 mb-4;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+<div class="flex min-h-screen">
+<aside class="w-64 bg-sidebar-bg text-slate-400 flex flex-col fixed inset-y-0 z-30">
+<div class="p-8 flex items-center gap-3">
+<div class="size-8 rounded bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-xl">bolt</span>
+</div>
+<span class="text-white font-semibold text-sm tracking-tight">Acme Console</span>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<p class="section-header px-4 mt-6">Workspace</p>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-white/5 hover:text-white transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-white/5 hover:text-white transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+<span>Projects</span>
+</a>
+<p class="section-header px-4 mt-8">Account</p>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md sidebar-item-active text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span>Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-white/5 hover:text-white transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span>Preferences</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-white/5 hover:text-white transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">security</span>
+<span>Security</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-md hover:bg-white/5 hover:text-white transition-all text-sm font-medium" href="#">
+<span class="material-symbols-outlined text-[20px]">credit_card</span>
+<span>Billing</span>
+</a>
+</nav>
+<div class="p-6 border-t border-white/5 mt-auto">
+<a class="flex items-center gap-3 px-4 py-2 text-sm font-medium hover:text-red-400 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span>Sign out</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 ml-64 flex flex-col min-h-screen">
+<header class="h-16 flex items-center justify-between px-10 sticky top-0 bg-slate-50/80 backdrop-blur-md z-20">
+<div class="flex items-center gap-2 text-[13px] text-slate-500">
+<span>Settings</span>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-900 font-medium">Profile Settings</span>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-400 hover:text-slate-900 transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-slate-400 hover:text-slate-900 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute -top-1 -right-1 size-2 bg-primary rounded-full ring-2 ring-slate-50"></span>
+</button>
+<div class="size-8 rounded-full bg-slate-200 overflow-hidden ring-1 ring-slate-200">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDrZ98Fk38OuFjbQLs7EdsGomE4W7GUV8oiTkrxp0bUMPWyc0NBWHcX2VQe0bWDIj2ufqxBY_aEFtmxsLTif7WJXfQxsXKJnt696bIA4Esigg1iMPJqq27gwlQ5kZPxEGxhz9hZijV7boSHg5H6_AqmCzqePwSI434yk7rbR8Ph5m8VrCuVpwiCjv73UvMCR-yg4FIjxJw4DoZ9M2u3vqCBwGSBbQFEHRFjJ9aMc1s_UNtXfYKz2LalBes9NKjIZ7GdnYdqEnl4DWw')"></div>
+</div>
+</div>
+</header>
+<div class="px-10 py-8 pb-32 w-full space-y-12">
+<div class="max-w-4xl">
+<h1 class="text-3xl font-bold tracking-tight text-slate-900">Account Settings</h1>
+<p class="text-slate-500 mt-2">Manage your public profile and account preferences.</p>
+</div>
+<div class="max-w-4xl">
+<p class="section-header">Public Profile</p>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+<div class="flex items-center gap-10">
+<div class="relative group">
+<div class="size-24 rounded-full overflow-hidden border border-gray-100 shadow-inner">
+<div class="w-full h-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB_70dBVld6Aab2k0aDwhppP0axX_nJj2RvPjDcVxDOQHooK00Hwnftal-ktl6WNWmo2GBmw4MotbKmdpkVCYTEFWy5pHGyOVQcXzJWx-Z8iS9VKLy2ZKaRp3Iwx8eaQBPX44EG-yskmGWgfG8XpfQxE4Ehl4Y_eVqeZfVnLvqSPV2-66KHfuzBUV8Oe8Ly7aw_-IOt_bRZ4Al8Z4lvg_JlLZJL_S2bUhIfVbCnIvcg9XBgKB5L8doZFZE59gooezeoXEuYSdipOTI')"></div>
+</div>
+<button class="absolute -bottom-1 -right-1 size-8 bg-white border border-gray-200 rounded-full shadow-sm flex items-center justify-center text-slate-600 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-lg">photo_camera</span>
+</button>
+</div>
+<div class="flex-1 grid grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="text-[13px] font-semibold text-slate-700">Display Name</label>
+<input class="w-full h-11 px-4 text-sm rounded-lg border-gray-200 bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm" type="text" value="Alex Thompson"/>
+</div>
+<div class="space-y-2">
+<label class="text-[13px] font-semibold text-slate-700">Job Title</label>
+<input class="w-full h-11 px-4 text-sm rounded-lg border-gray-200 bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm" type="text" value="Senior Product Designer"/>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-4xl">
+<p class="section-header">Contact Information</p>
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-8">
+<div class="grid grid-cols-2 gap-8">
+<div class="space-y-2">
+<label class="text-[13px] font-semibold text-slate-700">Email Address</label>
+<div class="relative">
+<input class="w-full h-11 pl-4 pr-10 text-sm rounded-lg border-gray-200 bg-slate-50 text-slate-500 cursor-not-allowed italic" readonly="" type="email" value="alex.thompson@company.com"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-slate-300 text-sm">lock</span>
+</div>
+<p class="text-[12px] text-slate-400">Verified official email address.</p>
+</div>
+<div class="space-y-2">
+<label class="text-[13px] font-semibold text-slate-700">Phone Number</label>
+<input class="w-full h-11 px-4 text-sm rounded-lg border-gray-200 bg-white focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-sm" type="tel" value="+1 (555) 000-1234"/>
+</div>
+</div>
+</div>
+</div>
+<div class="max-w-4xl">
+<p class="section-header text-red-500">Danger Zone</p>
+<div class="bg-red-50 border border-red-200 rounded-xl p-8 flex items-center justify-between">
+<div class="max-w-lg">
+<h4 class="font-bold text-red-900 mb-1">Delete Account</h4>
+<p class="text-sm text-red-700/80 leading-relaxed">
+                                Once you delete your account, there is no going back. Please be certain. All data, files and history will be permanently erased.
+                            </p>
+</div>
+<button class="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all whitespace-nowrap">
+                            Delete Account
+                        </button>
+</div>
+</div>
+</div>
+<footer class="fixed bottom-0 left-64 right-0 px-10 py-5 bg-white/80 backdrop-blur-xl border-t border-gray-200 flex items-center justify-between z-40">
+<div class="text-[12px] text-slate-400 font-medium">
+                    Last synced: 2 minutes ago
+                </div>
+<div class="flex gap-3">
+<button class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+<button class="px-8 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-blue-600 rounded-lg shadow-lg shadow-primary/20 transition-all">
+                        Save Changes
+                    </button>
+</div>
+</footer>
+</main>
+</div>
+
+</body></html>

@@ -15,4 +15,6 @@ public interface OrgService {
     Digest inviteUser(InviteUserRequest request, Long userId);
 
     void acceptInvite(String token, Long userId); // Authenticated user accepts token
+
+    java.util.List<com.nrkgo.accounts.dto.OrgMemberResponse> getOrgMembers(Long orgId, Long userId, String search);
 }

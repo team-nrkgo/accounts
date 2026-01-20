@@ -283,4 +283,42 @@ public class UserServiceImpl implements UserService {
                 .map(session -> userRepository.findById(session.getUserId()).orElse(null))
                 .orElse(null);
     }
+
+    @Override
+    @Transactional
+    public User updateUser(Long userId, com.nrkgo.accounts.dto.UpdateUserRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        boolean updated = false;
+
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+            updated = true;
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+            updated = true;
+        }
+        if (request.getMobileNumber() != null) {
+            user.setMobileNumber(request.getMobileNumber());
+            updated = true;
+        }
+        if (request.getCountry() != null) {
+            user.setCountry(request.getCountry());
+            updated = true;
+        }
+        if (request.getTimeZone() != null) {
+            user.setTimeZone(request.getTimeZone());
+            updated = true;
+        }
+
+        if (updated) {
+            user.setModifiedBy(userId);
+            user.setModifiedTime(LocalDateTime.now());
+            return userRepository.save(user);
+        }
+
+        return user;
+    }
 }

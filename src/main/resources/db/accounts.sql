@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS roles (
     modified_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- Seed Roles
+INSERT IGNORE INTO roles (id, name, description) VALUES (1, 'Admin', 'Administrator with full access');
+INSERT IGNORE INTO roles (id, name, description) VALUES (2, 'Editor', 'Can edit content but cannot manage users');
+INSERT IGNORE INTO roles (id, name, description) VALUES (3, 'Viewer', 'Read-only access');
+
 -- 3. Organizations Table
 CREATE TABLE IF NOT EXISTS organizations (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

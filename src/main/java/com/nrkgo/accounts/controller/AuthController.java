@@ -41,6 +41,17 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", session));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<String>> logout(jakarta.servlet.http.HttpServletResponse response) {
+        jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("user_session", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // Delete cookie
+        response.addCookie(cookie);
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", null));
+    }
+
     @GetMapping("/check-status")
     public ResponseEntity<ApiResponse<Integer>> checkStatus(@RequestParam String email) {
         Integer status = userService.checkUserStatus(email);

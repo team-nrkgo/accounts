@@ -26,4 +26,6 @@ public interface UserService {
     com.nrkgo.accounts.dto.InitResponse getInitData(Long userId, Long requestOrgId);
     
     User getUserBySession(String token);
+    
+    User updateUser(Long userId, com.nrkgo.accounts.dto.UpdateUserRequest request);
 }

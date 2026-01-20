@@ -17,4 +17,15 @@ public interface OrgUserRepository extends JpaRepository<OrgUser, Long> {
     Optional<OrgUser> findByOrgIdAndUserId(Long orgId, Long userId);
 
     boolean existsByOrgIdAndUserId(Long orgId, Long userId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT new com.nrkgo.accounts.dto.OrgMemberResponse(u.id, u.email, r.name, ou.designation, u.firstName, u.lastName, ou.status, ou.createdTime) " +
+           "FROM OrgUser ou, User u, Role r " +
+           "WHERE ou.orgId = :orgId AND ou.userId = u.id AND ou.roleId = r.id")
+    List<com.nrkgo.accounts.dto.OrgMemberResponse> findMembersByOrgId(@org.springframework.data.repository.query.Param("orgId") Long orgId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT new com.nrkgo.accounts.dto.OrgMemberResponse(u.id, u.email, r.name, ou.designation, u.firstName, u.lastName, ou.status, ou.createdTime) " +
+           "FROM OrgUser ou, User u, Role r " +
+           "WHERE ou.orgId = :orgId AND ou.userId = u.id AND ou.roleId = r.id " +
+           "AND (LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))")
+    List<com.nrkgo.accounts.dto.OrgMemberResponse> findMembersByOrgIdAndSearch(@org.springframework.data.repository.query.Param("orgId") Long orgId, @org.springframework.data.repository.query.Param("search") String search);
 }

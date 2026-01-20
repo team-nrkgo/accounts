@@ -98,6 +98,10 @@ public class OrgServiceImpl implements OrgService {
             // Create Shadow User
             user = new User();
             user.setEmail(request.getEmail());
+            // Save Names if provided for new user
+            user.setFirstName(request.getFirstName());
+            user.setLastName(request.getLastName());
+
             user.setPassword("shadow-user-placeholder"); 
             user.setStatus(0); // Created/Pending
             // Audit Fields for Shadow User
@@ -121,6 +125,7 @@ public class OrgServiceImpl implements OrgService {
         orgUser.setRoleId(request.getRoleId());
         orgUser.setStatus(0); // Pending/Invited
         orgUser.setIsDefault(0);
+        orgUser.setDesignation(request.getDesignation()); // Save Designation
         
         // Audit Fields
         orgUser.setCreatedBy(inviterId);
@@ -182,5 +187,20 @@ public class OrgServiceImpl implements OrgService {
 
         // Consume Token (Delete or Mark used)
         digestRepository.delete(digest); 
+    }
+
+    @Override
+    public java.util.List<com.nrkgo.accounts.dto.OrgMemberResponse> getOrgMembers(Long orgId, Long userId, String search) {
+        // 1. Check if requester is a member of the org
+        if (!orgUserRepository.existsByOrgIdAndUserId(orgId, userId)) {
+            throw new IllegalArgumentException("Access denied: You are not a member of this organization");
+        }
+        
+        // 2. Fetch members (with search if provided)
+        if (search != null && !search.trim().isEmpty()) {
+            return orgUserRepository.findMembersByOrgIdAndSearch(orgId, search.trim());
+        } else {
+            return orgUserRepository.findMembersByOrgId(orgId);
+        }
     }
 }

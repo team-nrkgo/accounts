@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Organization Team Management Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#0d7ff2",
+              "sidebar": "#1e293b", // Slate-800
+            },
+            fontFamily: {
+              "display": ["Inter", "Manrope", "sans-serif"]
+            },
+            borderRadius: {
+              "DEFAULT": "0.375rem",
+              "lg": "0.5rem",
+              "xl": "0.75rem",
+              "2xl": "1rem"
+            },
+          },
+        },
+      }
+    </script>
+<style type="text/tailwindcss">
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      .sidebar-item-active {
+        @apply bg-slate-700/50 text-white;
+      }
+      .sidebar-item {
+        @apply flex items-center gap-3 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-slate-700/30 transition-all rounded-lg text-sm font-medium;
+      }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+<div class="flex min-h-screen">
+<aside class="w-64 bg-sidebar flex-shrink-0 flex flex-col border-r border-slate-800">
+<div class="p-6">
+<div class="flex items-center gap-2.5">
+<div class="bg-primary p-2 rounded-xl text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-xl leading-none block">rocket_launch</span>
+</div>
+<span class="text-white text-lg font-bold tracking-tight">Acme SaaS</span>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="sidebar-item" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+                My Apps
+            </a>
+<a class="sidebar-item" href="#">
+<span class="material-symbols-outlined">person</span>
+                Profile
+            </a>
+<a class="sidebar-item sidebar-item-active" href="#">
+<span class="material-symbols-outlined">corporate_fare</span>
+                Organization
+            </a>
+<a class="sidebar-item" href="#">
+<span class="material-symbols-outlined">security</span>
+                Security
+            </a>
+<a class="sidebar-item" href="#">
+<span class="material-symbols-outlined">devices</span>
+                Signin Devices
+            </a>
+</nav>
+<div class="p-4 border-t border-slate-800">
+<a class="sidebar-item hover:text-red-400" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0">
+<header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<nav aria-label="Breadcrumb" class="flex items-center text-sm font-medium text-slate-400">
+<a class="hover:text-slate-600" href="#">Home</a>
+<span class="material-symbols-outlined text-base mx-2">chevron_right</span>
+<a class="hover:text-slate-600" href="#">Settings</a>
+<span class="material-symbols-outlined text-base mx-2 text-slate-300">chevron_right</span>
+<span class="text-slate-900">Organization</span>
+</nav>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 overflow-hidden ring-2 ring-slate-100">
+<img alt="User Avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVv3RoYUmvTNzjTkR5MOLfMhiwwiotDWcOxTd4aaJXJwifTOkiE1oH9eP73IjhBP2IhmaVRNSXouPqIj9dkqCeC12khXdyyZ1EjitVLSNPbgxZ3pOKMZYDj1uDK07jbyAgKSHIo2NoIxjGA7KflTBS3HP-uhS9U8hPEyXptjoLDy-50jZIzZ303KhM5PFbRaYJmb8Gf8ZXhOr2ONikMFI4mdfWLMdBE-SvcMDHQFAMzvjwih0pu7Jt2xJtwe-pBGnTG-G66XSgngg"/>
+</div>
+</div>
+</header>
+<main class="flex-1 p-8 max-w-6xl w-full mx-auto">
+<div class="mb-8">
+<h1 class="text-2xl font-bold text-slate-900 tracking-tight">Organization</h1>
+<p class="text-slate-500 text-sm mt-1">Manage your team and permissions.</p>
+</div>
+<div class="flex items-center gap-8 border-b border-slate-200 mb-8">
+<a class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-700 relative" href="#">
+                    General
+                </a>
+<a class="pb-4 text-sm font-semibold text-primary relative" href="#">
+                    Members
+                    <span class="absolute bottom-0 left-0 w-full h-0.5 bg-primary"></span>
+</a>
+<a class="pb-4 text-sm font-medium text-slate-500 hover:text-slate-700 relative" href="#">
+                    Roles
+                </a>
+</div>
+<div class="space-y-6">
+<div class="flex items-center justify-between gap-4">
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 shadow-sm" placeholder="Search members..." type="text"/>
+</div>
+<button class="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
+<span class="material-symbols-outlined text-lg">add</span>
+                        Invite People
+                    </button>
+</div>
+<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-slate-50/50 border-b border-slate-100">
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">User</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+<th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-primary font-bold text-sm">
+                                                AR
+                                            </div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Alex Rivera</span>
+<span class="text-xs text-slate-500">alex@acmecorp.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer hover:bg-slate-200 transition-colors">
+                                            Admin
+                                            <span class="material-symbols-outlined text-sm leading-none">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-sm text-slate-600 font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-slate-100">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZJVz_1b_k2uG5VC5eKaOh2h16q2tr9xMwgkoMGnnl-gZXLtUYFL7x272zLBsyO3JE4OtxVmscl1EBhvEaAW08_wjm6bV5vlHVO34gMFYqNhcev5ZKo4VI8WNnsRqSaeewGPWB1j_8PaSaYQa5LpV1spDmhtJsq8JJIFcyQ17pdZO4WhiPsubAjBWeya83UUf5z2PkrCmTv_i_8DzYscaawuhO7r2Fy79w38_cIQcQ-zBRGtb-xKsBtKFym881i9hE8kfIu6l1wL4"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Jordan Smith</span>
+<span class="text-xs text-slate-500">jordan@acmecorp.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer hover:bg-slate-200 transition-colors">
+                                            Editor
+                                            <span class="material-symbols-outlined text-sm leading-none">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-sm text-slate-600 font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
+                                                TB
+                                            </div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Taylor Bell</span>
+<span class="text-xs text-slate-500">taylor@acmecorp.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer hover:bg-slate-200 transition-colors">
+                                            Viewer
+                                            <span class="material-symbols-outlined text-sm leading-none">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+<span class="text-sm text-slate-600 font-medium">Pending</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-slate-100">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLn0USyVNWZNLAY1RRxz6j8Q2zkRnpDydatNN2EVGYoEZj-f3y8qd4vZlQONGn1krcm1RFV3uDFUhEw1DpevlXhUVkEXeeguzU4dHjCkOBw2JNpIAvvHNRx3bKnN8ZdF-_8CQ2WAwRtRTUS17nl_zfNDN7bav7n1YWr36X58XmntGXZ0u80KJ46vKRq8bnZ4sS8qDrGlu_LwBhSAPw_ajKbr9P4YuGcsfyI8_XfLROQFNE7wmwOMxcGKS5h2A-c5qbppE1M9mWeZk"/>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-slate-900">Morgan Lee</span>
+<span class="text-xs text-slate-500">morgan@acmecorp.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium cursor-pointer hover:bg-slate-200 transition-colors">
+                                            Editor
+                                            <span class="material-symbols-outlined text-sm leading-none">expand_more</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-sm text-slate-600 font-medium">Active</span>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+<span class="text-xs text-slate-500 font-medium">Showing 4 of 24 members</span>
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-xl">chevron_left</span>
+</button>
+<button class="px-3 py-1 text-xs font-bold rounded-lg bg-white border border-slate-200 text-primary shadow-sm">1</button>
+<button class="px-3 py-1 text-xs font-bold rounded-lg hover:bg-white hover:border-slate-200 text-slate-500 transition-all">2</button>
+<button class="px-3 py-1 text-xs font-bold rounded-lg hover:bg-white hover:border-slate-200 text-slate-500 transition-all">3</button>
+<button class="p-1.5 text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined text-xl">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="p-8 mt-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400">
+<p>© 2024 Acme SaaS Inc. Premium Platform</p>
+<div class="flex items-center gap-6">
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms</a>
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</footer>
+</div>
+</div>
+
+</body></html>
