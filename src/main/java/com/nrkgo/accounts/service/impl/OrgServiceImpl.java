@@ -32,6 +32,7 @@ public class OrgServiceImpl implements OrgService {
     private final RoleRepository roleRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
     private final com.nrkgo.accounts.service.UserService userService;
+    private final com.nrkgo.accounts.service.MailService mailService;
 
     // Manual Constructor for DI
     public OrgServiceImpl(OrganizationRepository organizationRepository,
@@ -40,7 +41,8 @@ public class OrgServiceImpl implements OrgService {
                           UserRepository userRepository,
                           RoleRepository roleRepository,
                           org.springframework.security.crypto.password.PasswordEncoder passwordEncoder,
-                          com.nrkgo.accounts.service.UserService userService) {
+                          com.nrkgo.accounts.service.UserService userService,
+                          com.nrkgo.accounts.service.MailService mailService) {
         this.organizationRepository = organizationRepository;
         this.orgUserRepository = orgUserRepository;
         this.digestRepository = digestRepository;
@@ -48,6 +50,7 @@ public class OrgServiceImpl implements OrgService {
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.userService = userService;
+        this.mailService = mailService;
     }
 
     @Override
@@ -171,7 +174,25 @@ public class OrgServiceImpl implements OrgService {
         digest.setCreatedTime(System.currentTimeMillis());
         digest.setModifiedTime(System.currentTimeMillis());
         
-        return digestRepository.save(digest);
+        digestRepository.save(digest);
+
+        // 5. Send Invitation Email
+        try {
+            User inviter = userRepository.findById(inviterId).orElse(null);
+            Organization org = organizationRepository.findById(orgId).orElse(null);
+            
+            if (inviter != null && org != null) {
+                String inviteLink = "http://localhost:5173/invitations?token=" + token; // Frontend link
+                String inviterName = inviter.getFirstName() + " " + (inviter.getLastName() != null ? inviter.getLastName() : "");
+                String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getInvitationEmailTemplate(inviteLink, org.getOrgName(), inviterName.trim());
+                
+                mailService.sendEmail(request.getEmail(), "Invitation to join " + org.getOrgName(), emailBody, true);
+            }
+        } catch (Exception e) {
+            log.error("Failed to send invitation email to: {}", request.getEmail(), e);
+        }
+
+        return digest;
     }
     
     // ... (acceptInvite, getOrgMembers omitted for brevity in tool replacement if not modifying them, but I need to reach updateMember)

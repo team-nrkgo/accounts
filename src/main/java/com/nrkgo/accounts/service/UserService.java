@@ -32,4 +32,8 @@ public interface UserService {
     java.util.List<UserSession> getUserSessions(Long userId);
     
     void revokeSession(Long sessionId, Long userId);
+    
+    com.nrkgo.accounts.model.User verifyUser(String token);
+    
+    void resendVerificationEmail(String email);
 }

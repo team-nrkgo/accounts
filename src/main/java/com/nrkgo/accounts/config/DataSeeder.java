@@ -12,29 +12,31 @@ public class DataSeeder {
     @Bean
     public CommandLineRunner initData(RoleRepository roleRepository) {
         return args -> {
-            if (roleRepository.count() == 0) {
-                System.out.println("Seeding Default Roles...");
-                
-                Role admin = new Role();
-                admin.setId(1L);
-                admin.setName("Admin");
-                admin.setDescription("Administrator with full access");
-                roleRepository.save(admin);
+            System.out.println("Checking Default Roles...");
 
-                Role editor = new Role();
-                editor.setId(2L);
-                editor.setName("Editor");
-                editor.setDescription("Can edit content but cannot manage users");
-                roleRepository.save(editor);
+            // Cleanup unwanted roles
+            roleRepository.findByName("Editor").ifPresent(roleRepository::delete);
+            roleRepository.findByName("Viewer").ifPresent(roleRepository::delete);
 
-                Role viewer = new Role();
-                viewer.setId(3L);
-                viewer.setName("Viewer");
-                viewer.setDescription("Read-only access");
-                roleRepository.save(viewer);
-                
-                System.out.println("Roles Seeded Successfully.");
+            // Ensure 'Super Admin' exists
+            if (roleRepository.findByName("Super Admin").isEmpty()) {
+                Role superAdmin = new Role();
+                superAdmin.setName("Super Admin");
+                superAdmin.setDescription("Full system access");
+                roleRepository.save(superAdmin);
+                System.out.println("Created 'Super Admin' role.");
             }
+
+            // Ensure 'Admin' exists
+            if (roleRepository.findByName("Admin").isEmpty()) {
+                Role admin = new Role();
+                admin.setName("Admin");
+                admin.setDescription("Administrator with broad access");
+                roleRepository.save(admin);
+                System.out.println("Created 'Admin' role.");
+            }
+            
+            System.out.println("Role Seeding Complete.");
         };
     }
 }

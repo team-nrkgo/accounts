@@ -28,6 +28,8 @@ public class UserServiceImpl implements UserService {
     private final com.nrkgo.accounts.repository.OrganizationRepository organizationRepository;
     private final com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository;
     private final com.nrkgo.accounts.repository.RoleRepository roleRepository;
+    private final com.nrkgo.accounts.service.MailService mailService;
+    private final com.nrkgo.accounts.repository.DigestRepository digestRepository;
 
     // Manual Constructor for DI
     public UserServiceImpl(UserRepository userRepository, 
@@ -35,13 +37,17 @@ public class UserServiceImpl implements UserService {
                            PasswordEncoder passwordEncoder,
                            com.nrkgo.accounts.repository.OrganizationRepository organizationRepository,
                            com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
-                           com.nrkgo.accounts.repository.RoleRepository roleRepository) {
+                           com.nrkgo.accounts.repository.RoleRepository roleRepository,
+                           com.nrkgo.accounts.service.MailService mailService,
+                           com.nrkgo.accounts.repository.DigestRepository digestRepository) {
         this.userRepository = userRepository;
         this.userSessionRepository = userSessionRepository;
         this.passwordEncoder = passwordEncoder;
         this.organizationRepository = organizationRepository;
         this.orgUserRepository = orgUserRepository;
         this.roleRepository = roleRepository;
+        this.mailService = mailService;
+        this.digestRepository = digestRepository;
     }
 
     @Override
@@ -145,7 +151,13 @@ public class UserServiceImpl implements UserService {
         
         orgUserRepository.save(orgUser);
 
+
+
+        // --- Email Verification Setup ---
+        sendVerificationEmail(savedUser);
+
         return savedUser;
+
     }
 
     @Override
@@ -158,6 +170,10 @@ public class UserServiceImpl implements UserService {
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password");
+        }
+
+        if (user.getStatus() == 0) { // Pending/Unverified
+            throw new com.nrkgo.accounts.exception.UserNotVerifiedException("Email not verified");
         }
 
         return createSession(user, httpRequest);
@@ -352,5 +368,70 @@ public class UserServiceImpl implements UserService {
         session.setModifiedBy(userId);
         session.setModifiedTime(System.currentTimeMillis());
         userSessionRepository.save(session);
+    }
+
+    @Override
+    @Transactional
+    public User verifyUser(String token) {
+        com.nrkgo.accounts.model.Digest digest = digestRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid verification token"));
+
+        if (!"EMAIL_VERIFICATION".equals(digest.getEntityType())) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
+
+        if (digest.getExpiryTime() < System.currentTimeMillis()) {
+            throw new IllegalArgumentException("Token expired");
+        }
+
+        Long userId = Long.parseLong(digest.getEntityId());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        user.setStatus(1); // Active
+        user.setModifiedBy(userId);
+        user.setModifiedTime(System.currentTimeMillis());
+        userRepository.save(user);
+
+        // Invalidate token
+        digestRepository.delete(digest);
+
+        return user;
+    }
+
+    @Override
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        sendVerificationEmail(user);
+    }
+
+    private void sendVerificationEmail(User user) {
+        try {
+            // Invalidate/Delete old tokens for this user?
+            // Optional: for now just generate meaningful fresh token
+            
+            String token = java.util.UUID.randomUUID().toString();
+            com.nrkgo.accounts.model.Digest digest = new com.nrkgo.accounts.model.Digest();
+            digest.setEntityType("EMAIL_VERIFICATION");
+            digest.setEntityId(String.valueOf(user.getId()));
+            digest.setToken(token);
+            digest.setMetadata(user.getEmail());
+            digest.setExpiryTime(System.currentTimeMillis() + 86400000L); // 24 hours
+            digest.setCreatedBy(user.getId());
+            digest.setModifiedBy(user.getId());
+            digest.setCreatedTime(System.currentTimeMillis());
+            digest.setModifiedTime(System.currentTimeMillis());
+            
+            digestRepository.save(digest);
+
+            String verificationLink = "http://localhost:8080/api/auth/verify?token=" + token;
+            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getVerificationEmailTemplate(verificationLink);
+            
+            mailService.sendEmail(user.getEmail(), "Verify your email address", emailBody, true);
+        } catch (Exception e) {
+            log.error("Failed to send verification email to user: {}", user.getId(), e);
+        }
     }
 }

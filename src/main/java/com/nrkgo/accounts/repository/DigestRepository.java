@@ -8,7 +8,10 @@ import java.util.Optional;
 
 @Repository
 public interface DigestRepository extends JpaRepository<Digest, Long> {
+    
     Optional<Digest> findByToken(String token);
 
     Optional<Digest> findByEntityIdAndEntityType(String entityId, String entityType);
+    
+    void deleteByToken(String token);
 }

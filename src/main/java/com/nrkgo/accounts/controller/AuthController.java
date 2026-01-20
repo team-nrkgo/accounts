@@ -40,9 +40,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse<UserSession>> login(@Valid @RequestBody LoginRequest request, 
                                                        jakarta.servlet.http.HttpServletRequest httpRequest,
                                                        jakarta.servlet.http.HttpServletResponse response) {
-        UserSession session = userService.loginUser(request, httpRequest);
-        setCookie(response, session.getCookie());
-        return ResponseEntity.ok(ApiResponse.success("Login successful", session));
+        try {
+            UserSession session = userService.loginUser(request, httpRequest);
+            setCookie(response, session.getCookie());
+            return ResponseEntity.ok(ApiResponse.success("Login successful", session));
+        } catch (com.nrkgo.accounts.exception.UserNotVerifiedException e) {
+            // Resend Email in a wrapper transaction (handled by service)
+            userService.resendVerificationEmail(request.getEmail());
+            return ResponseEntity.badRequest().body(ApiResponse.error("Email not verified. A new verification email has been sent to " + request.getEmail()));
+        }
     }
 
     @PostMapping("/logout")
@@ -111,6 +117,27 @@ public class AuthController {
         
         com.nrkgo.accounts.dto.InitResponse response = userService.getInitData(user.getId(), orgId);
         return ResponseEntity.ok(ApiResponse.success("Initialization data fetched", response));
+    }
+
+    @GetMapping("/verify")
+    public void verifyUser(@RequestParam String token, 
+                           jakarta.servlet.http.HttpServletRequest request,
+                           jakarta.servlet.http.HttpServletResponse response) throws java.io.IOException {
+        try {
+            User user = userService.verifyUser(token);
+            if (user != null) {
+                // Auto-Login: Create Session
+                UserSession session = userService.createSession(user, request);
+                setCookie(response, session.getCookie());
+                
+                // Redirect to Product Page (Homepage)
+                response.sendRedirect("http://localhost:5173/");
+            } else {
+                response.sendRedirect("http://localhost:5173/login?error=verification_failed");
+            }
+        } catch (Exception e) {
+            response.sendRedirect("http://localhost:5173/login?error=verification_failed");
+        }
     }
 
     private void setCookie(jakarta.servlet.http.HttpServletResponse response, String token) {
