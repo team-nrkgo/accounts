@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create Axios instance
 const api = axios.create({
-    baseURL: '/api', // Vite proxy will handle the redirect to localhost:8080
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api', // Vite proxy or absolute URL from Cloudflare env
     headers: {
         'Content-Type': 'application/json',
     },

@@ -13,7 +13,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.Optional;
 
 @Service
@@ -24,22 +23,28 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserSessionRepository userSessionRepository;
     private final PasswordEncoder passwordEncoder;
-    
+
     private final com.nrkgo.accounts.repository.OrganizationRepository organizationRepository;
     private final com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository;
     private final com.nrkgo.accounts.repository.RoleRepository roleRepository;
     private final com.nrkgo.accounts.service.MailService mailService;
     private final com.nrkgo.accounts.repository.DigestRepository digestRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend.url}")
+    private String frontendUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${app.backend.url}")
+    private String backendUrl;
+
     // Manual Constructor for DI
-    public UserServiceImpl(UserRepository userRepository, 
-                           UserSessionRepository userSessionRepository, 
-                           PasswordEncoder passwordEncoder,
-                           com.nrkgo.accounts.repository.OrganizationRepository organizationRepository,
-                           com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
-                           com.nrkgo.accounts.repository.RoleRepository roleRepository,
-                           com.nrkgo.accounts.service.MailService mailService,
-                           com.nrkgo.accounts.repository.DigestRepository digestRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+            UserSessionRepository userSessionRepository,
+            PasswordEncoder passwordEncoder,
+            com.nrkgo.accounts.repository.OrganizationRepository organizationRepository,
+            com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
+            com.nrkgo.accounts.repository.RoleRepository roleRepository,
+            com.nrkgo.accounts.service.MailService mailService,
+            com.nrkgo.accounts.repository.DigestRepository digestRepository) {
         this.userRepository = userRepository;
         this.userSessionRepository = userSessionRepository;
         this.passwordEncoder = passwordEncoder;
@@ -66,34 +71,35 @@ public class UserServiceImpl implements UserService {
         // Logic to derive firstName if missing
         String fName = request.getFirstName();
         if (fName == null || fName.trim().isEmpty()) {
-             String email = request.getEmail();
-             if (email != null && email.contains("@")) {
-                 fName = email.split("@")[0];
-             } else {
-                 fName = "User"; // Fallback
-             }
+            String email = request.getEmail();
+            if (email != null && email.contains("@")) {
+                fName = email.split("@")[0];
+            } else {
+                fName = "User"; // Fallback
+            }
         }
         user.setFirstName(fName);
-        
+
         user.setLastName(request.getLastName());
         user.setMobileNumber(request.getMobileNumber());
-        
+
         // Logic to default TimeZone
         String tZone = request.getTimeZone();
         if (tZone == null || tZone.trim().isEmpty()) {
             tZone = "UTC";
         }
         user.setTimeZone(tZone);
-        
+
         user.setCountry(request.getCountry());
         user.setStatus(0); // Default status (e.g., Created / Pending Verification)
         user.setSource(1); // Direct
-        
-        // Audit Fields for User (Self-referencing usually impossible before ID, but can update after save if strict needed)
+
+        // Audit Fields for User (Self-referencing usually impossible before ID, but can
+        // update after save if strict needed)
         // For now, let's focus on the related entities which utilize the new User ID.
 
         User savedUser = userRepository.save(user);
-        
+
         // Update User's own audit fields now that we have an ID
         savedUser.setCreatedBy(savedUser.getId());
         savedUser.setModifiedBy(savedUser.getId());
@@ -102,20 +108,20 @@ public class UserServiceImpl implements UserService {
         userRepository.save(savedUser);
 
         // --- Default Organization Setup ---
-        
+
         // 1. Create Default Organization
         com.nrkgo.accounts.model.Organization org = new com.nrkgo.accounts.model.Organization();
         String orgName = savedUser.getFirstName() + "'s Workspace";
         org.setOrgName(orgName);
         org.setOrgUrlName(orgName.toLowerCase().replaceAll("[^a-z0-9]", "-")); // Basic slugify
         org.setStatus(1); // Active
-        
+
         // Audit Fields
         org.setCreatedBy(savedUser.getId());
         org.setModifiedBy(savedUser.getId());
         org.setCreatedTime(System.currentTimeMillis());
         org.setModifiedTime(System.currentTimeMillis());
-        
+
         com.nrkgo.accounts.model.Organization savedOrg = organizationRepository.save(org);
 
         // 2. Resolve 'Super Admin' Role
@@ -125,13 +131,13 @@ public class UserServiceImpl implements UserService {
                     com.nrkgo.accounts.model.Role newRole = new com.nrkgo.accounts.model.Role();
                     newRole.setName("Super Admin");
                     newRole.setDescription("Default super admin role");
-                    
+
                     // Audit Fields (Assigned to the first user claiming it)
                     newRole.setCreatedBy(savedUser.getId());
                     newRole.setModifiedBy(savedUser.getId());
                     newRole.setCreatedTime(System.currentTimeMillis());
                     newRole.setModifiedTime(System.currentTimeMillis());
-                    
+
                     return roleRepository.save(newRole);
                 });
 
@@ -142,16 +148,14 @@ public class UserServiceImpl implements UserService {
         orgUser.setRoleId(superAdminRole.getId());
         orgUser.setStatus(1); // Active
         orgUser.setIsDefault(1); // Default Org
-        
+
         // Audit Fields
         orgUser.setCreatedBy(savedUser.getId());
         orgUser.setModifiedBy(savedUser.getId());
         orgUser.setCreatedTime(System.currentTimeMillis());
         orgUser.setModifiedTime(System.currentTimeMillis());
-        
+
         orgUserRepository.save(orgUser);
-
-
 
         // --- Email Verification Setup ---
         sendVerificationEmail(savedUser);
@@ -184,7 +188,7 @@ public class UserServiceImpl implements UserService {
     public UserSession createSession(User user, jakarta.servlet.http.HttpServletRequest httpRequest) {
         // Create User Session
         String token = com.nrkgo.accounts.common.util.TokenUtils.generateToken(); // Secure Token
-        
+
         // Using standard Java object creation + Setters instead of Builder
         UserSession session = new UserSession();
         session.setUserId(user.getId());
@@ -220,7 +224,8 @@ public class UserServiceImpl implements UserService {
         return userSessionRepository.findByCookie(token)
                 .map(session -> {
                     // Check if session is active (status=1) and not expired
-                    if (session.getStatus() != 1) return false;
+                    if (session.getStatus() != 1)
+                        return false;
                     return session.getExpireTime() > System.currentTimeMillis();
                 })
                 .orElse(false);
@@ -235,7 +240,7 @@ public class UserServiceImpl implements UserService {
 
         // 2. Fetch all OrgUser records
         java.util.List<com.nrkgo.accounts.model.OrgUser> orgUsers = orgUserRepository.findByUserId(userId);
-        
+
         if (orgUsers.isEmpty()) {
             throw new IllegalArgumentException("User does not belong to any organization");
         }
@@ -244,10 +249,10 @@ public class UserServiceImpl implements UserService {
         java.util.List<Long> orgIds = orgUsers.stream()
                 .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
                 .collect(java.util.stream.Collectors.toList());
-        
+
         // Fetch all Organizations in one query
         java.util.List<com.nrkgo.accounts.model.Organization> allOrgs = organizationRepository.findAllById(orgIds);
-        
+
         // Map ID -> Org for easy lookup
         java.util.Map<Long, com.nrkgo.accounts.model.Organization> orgMap = allOrgs.stream()
                 .collect(java.util.stream.Collectors.toMap(com.nrkgo.accounts.model.Organization::getId, org -> org));
@@ -261,7 +266,7 @@ public class UserServiceImpl implements UserService {
             // Verify user belongs to this org
             boolean belongs = orgUsers.stream().anyMatch(ou -> ou.getOrgId().equals(requestOrgId));
             if (!belongs) {
-                 throw new SecurityException("User does not have access to requested organization");
+                throw new SecurityException("User does not have access to requested organization");
             }
         } else {
             // Priority 2: 'is_default' flag in DB
@@ -270,21 +275,21 @@ public class UserServiceImpl implements UserService {
                     .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
                     .findFirst()
                     .orElse(null);
-            
+
             // Priority 3: Fallback to first found
             if (targetOrgId == null && !orgIds.isEmpty()) {
                 targetOrgId = orgIds.get(0);
             }
         }
-        
+
         final Long finalDefaultId = targetOrgId;
 
         // 5. Build Response
         com.nrkgo.accounts.dto.InitResponse response = new com.nrkgo.accounts.dto.InitResponse();
         response.setUserInformation(user);
-        
+
         java.util.List<com.nrkgo.accounts.model.Organization> otherOrgs = new java.util.ArrayList<>();
-        
+
         for (com.nrkgo.accounts.model.Organization org : allOrgs) {
             if (org.getId().equals(finalDefaultId)) {
                 response.setDefaultOrganizations(org);
@@ -292,12 +297,11 @@ public class UserServiceImpl implements UserService {
                 otherOrgs.add(org);
             }
         }
-        
+
         response.setOtherOrganizations(otherOrgs);
-        
+
         return response;
     }
-     
 
     @Override
     @Transactional(readOnly = true)
@@ -359,11 +363,11 @@ public class UserServiceImpl implements UserService {
     public void revokeSession(Long sessionId, Long userId) {
         UserSession session = userSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
-        
+
         if (!session.getUserId().equals(userId)) {
             throw new SecurityException("Not authorized to revoke this session");
         }
-        
+
         session.setStatus(0); // Revoke
         session.setModifiedBy(userId);
         session.setModifiedTime(System.currentTimeMillis());
@@ -425,15 +429,16 @@ public class UserServiceImpl implements UserService {
         digest.setModifiedBy(user.getId());
         digest.setCreatedTime(System.currentTimeMillis());
         digest.setModifiedTime(System.currentTimeMillis());
-        
+
         digestRepository.save(digest);
 
         // Send Email
         try {
-            String resetLink = "http://localhost:5173/reset-password?token=" + token;
+            String resetLink = frontendUrl + "/reset-password?token=" + token;
             String userName = user.getFirstName() != null ? user.getFirstName() : "User";
-            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getPasswordResetEmailTemplate(resetLink, userName);
-             
+            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getPasswordResetEmailTemplate(resetLink,
+                    userName);
+
             mailService.sendEmail(user.getEmail(), "Reset your password", emailBody, true);
         } catch (Exception e) {
             log.error("Failed to send password reset email to: {}", user.getEmail(), e);
@@ -466,9 +471,9 @@ public class UserServiceImpl implements UserService {
 
         // Invalidate Token
         digestRepository.delete(digest);
-        
-        // Optional: Invalidate all existing sessions? 
-        // For now, let's keep them active or we could check policy. 
+
+        // Optional: Invalidate all existing sessions?
+        // For now, let's keep them active or we could check policy.
         // Usually good practice to revoke, but keeping simple for this request.
     }
 
@@ -476,7 +481,7 @@ public class UserServiceImpl implements UserService {
         try {
             // Invalidate/Delete old tokens for this user?
             // Optional: for now just generate meaningful fresh token
-            
+
             String token = java.util.UUID.randomUUID().toString();
             com.nrkgo.accounts.model.Digest digest = new com.nrkgo.accounts.model.Digest();
             digest.setEntityType("EMAIL_VERIFICATION");
@@ -488,12 +493,13 @@ public class UserServiceImpl implements UserService {
             digest.setModifiedBy(user.getId());
             digest.setCreatedTime(System.currentTimeMillis());
             digest.setModifiedTime(System.currentTimeMillis());
-            
+
             digestRepository.save(digest);
 
-            String verificationLink = "http://localhost:8080/api/auth/verify?token=" + token;
-            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig.getVerificationEmailTemplate(verificationLink);
-            
+            String verificationLink = backendUrl + "/api/auth/verify?token=" + token;
+            String emailBody = com.nrkgo.accounts.config.EmailTemplateConfig
+                    .getVerificationEmailTemplate(verificationLink);
+
             mailService.sendEmail(user.getEmail(), "Verify your email address", emailBody, true);
         } catch (Exception e) {
             log.error("Failed to send verification email to user: {}", user.getId(), e);
