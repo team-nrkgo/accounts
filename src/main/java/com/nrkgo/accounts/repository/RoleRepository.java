@@ -13,8 +13,11 @@ import org.springframework.data.repository.query.Param;
 public interface RoleRepository extends JpaRepository<Role, Long> {
     Optional<Role> findByName(String name);
 
+    // Used by AdminGuard: find the system-wide 'Admin' role (orgId = NULL)
+    Optional<Role> findByNameAndOrgIdIsNull(String name);
+
     @Query("SELECT r FROM Role r WHERE r.orgId IS NULL OR r.orgId = :orgId")
     List<Role> findAllGlobalAndOrgRoles(@Param("orgId") Long orgId);
-    
+
     boolean existsByNameAndOrgId(String name, Long orgId);
 }

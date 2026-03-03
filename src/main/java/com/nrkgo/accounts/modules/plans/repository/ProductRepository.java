@@ -1,0 +1,11 @@
+package com.nrkgo.accounts.modules.plans.repository;
+
+import com.nrkgo.accounts.modules.plans.model.Product;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    Optional<Product> findByProductCode(Integer productCode);
+}
