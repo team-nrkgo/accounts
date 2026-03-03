@@ -1,0 +1,23 @@
+HTTP/2 200 
+date: Sun, 01 Mar 2026 20:04:10 GMT
+content-type: application/json
+vary: Origin
+vary: Access-Control-Request-Method
+vary: Access-Control-Request-Headers
+access-control-allow-origin: https://accounts.nrkgo.com
+access-control-allow-credentials: true
+x-content-type-options: nosniff
+x-xss-protection: 0
+cache-control: no-cache, no-store, max-age=0, must-revalidate
+pragma: no-cache
+expires: 0
+strict-transport-security: max-age=31536000 ; includeSubDomains
+x-frame-options: DENY
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=8r4KsNWzgmexjOfYdedSZjNPJPRIcu0XUffVEw5FQyijsfyUMf7DqsPD9ZJDU%2Btsd2Gkvb%2FUqKEqRrfBSgymsX1udi%2BMD3CpWZR8Wbw%3D"}]}
+cf-cache-status: DYNAMIC
+server: cloudflare
+cf-ray: 9d5ac4e99c8649d1-SIN
+alt-svc: h3=":443"; ma=86400
+
+{"success":true,"message":"No session cookie found","data":false}

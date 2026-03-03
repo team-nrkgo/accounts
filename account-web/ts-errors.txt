@@ -1,0 +1,11 @@
+src/components/layout/DashboardLayout.tsx(33,11): error TS6133: 'navigate' is declared but its value is never read.
+src/components/org/EditMemberModal.tsx(5,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/components/org/InviteMemberModal.tsx(5,52): error TS6133: 'CardDescription' is declared but its value is never read.
+src/main.tsx(1,1): error TS6133: 'StrictMode' is declared but its value is never read.
+src/pages/Invitations.tsx(22,30): error TS6133: 'isAuthLoading' is declared but its value is never read.
+src/pages/settings/Organization.tsx(2,1): error TS6192: All imports in import declaration are unused.
+src/pages/settings/Organization.tsx(627,21): error TS2322: Type '{ isOpen: boolean; onClose: () => void; onSuccess: () => Promise<void>; roleToEdit: any; orgId: any; }' is not assignable to type 'IntrinsicAttributes & EditRoleModalProps'.
+  Property 'roleToEdit' does not exist on type 'IntrinsicAttributes & EditRoleModalProps'.
+src/pages/settings/Profile.tsx(13,30): error TS2339: Property 'mobile_number' does not exist on type 'User'.
+src/pages/settings/Profile.tsx(199,17): error TS2322: Type '{ isOpen: boolean; title: string; message: string; confirmText: string; cancelText: string; type: string; onConfirm: () => Promise<void>; onCancel: () => void; }' is not assignable to type 'IntrinsicAttributes & ConfirmDialogProps'.
+  Property 'type' does not exist on type 'IntrinsicAttributes & ConfirmDialogProps'.
