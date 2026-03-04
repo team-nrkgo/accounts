@@ -17,9 +17,15 @@ public class SnapGuide extends BaseEntity {
 
     private String title;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "org_id")
+    private com.nrkgo.accounts.model.Organization org;
 
     @Column(name = "steps_json", columnDefinition = "LONGTEXT")
     private String stepsJson;
@@ -58,12 +64,22 @@ public class SnapGuide extends BaseEntity {
         this.title = title;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     public User getUser() {
         return user;
     }
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public com.nrkgo.accounts.model.Organization getOrg() {
+        return org;
+    }
+
+    public void setOrg(com.nrkgo.accounts.model.Organization org) {
+        this.org = org;
     }
 
     public String getStepsJson() {

@@ -6,11 +6,19 @@ import com.nrkgo.accounts.model.User;
 import java.util.List;
 
 public interface SnapGuideService {
-    SnapGuide saveGuide(SnapGuideDto guideDto, User user);
+        SnapGuide saveGuide(SnapGuideDto guideDto, User user, Long orgId);
 
-    List<SnapGuide> getGuidesForUser(User user);
+        List<SnapGuide> getGuidesForUser(User user, Long orgId);
 
-    SnapGuide getGuideById(String id, User user);
+        org.springframework.data.domain.Page<SnapGuide> getGuidesForUser(User user, Long orgId,
+                        org.springframework.data.domain.Pageable pageable);
 
-    void deleteGuide(String id, User user);
+        org.springframework.data.domain.Page<SnapGuide> searchGuides(User user, Long orgId, String query,
+                        org.springframework.data.domain.Pageable pageable);
+
+        SnapGuide getGuideById(String id, User user, Long orgId);
+
+        SnapGuide getGuideByNumericId(Long id, User user, Long orgId);
+
+        void deleteGuide(String id, User user, Long orgId);
 }

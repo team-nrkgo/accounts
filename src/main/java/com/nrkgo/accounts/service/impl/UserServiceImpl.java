@@ -477,6 +477,20 @@ public class UserServiceImpl implements UserService {
         // Usually good practice to revoke, but keeping simple for this request.
     }
 
+    @Override
+    @Transactional
+    public void activateUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+
+        user.setStatus(1); // Active
+        user.setModifiedBy(userId); // Or current admin ID if available
+        user.setModifiedTime(System.currentTimeMillis());
+        userRepository.save(user);
+
+        log.info("User activated by admin/tool: {}", userId);
+    }
+
     private void sendVerificationEmail(User user) {
         try {
             // Invalidate/Delete old tokens for this user?

@@ -16,33 +16,38 @@ import java.util.Optional;
 public class SnapGuideServiceImpl implements SnapGuideService {
 
     private final SnapGuideRepository guideRepository;
+    private final com.nrkgo.accounts.repository.OrganizationRepository organizationRepository;
     private final ObjectMapper objectMapper;
 
-    public SnapGuideServiceImpl(SnapGuideRepository guideRepository, ObjectMapper objectMapper) {
+    public SnapGuideServiceImpl(SnapGuideRepository guideRepository,
+            com.nrkgo.accounts.repository.OrganizationRepository organizationRepository,
+            ObjectMapper objectMapper) {
         this.guideRepository = guideRepository;
+        this.organizationRepository = organizationRepository;
         this.objectMapper = objectMapper;
     }
 
     @Override
     @Transactional
-    public SnapGuide saveGuide(SnapGuideDto guideDto, User user) {
+    public SnapGuide saveGuide(SnapGuideDto guideDto, User user, Long orgId) {
         String extId = guideDto.getExternalId();
 
-        // Making it REQUIRED as requested
         if (extId == null || extId.trim().isEmpty()) {
             throw new IllegalArgumentException("The field 'external_id' is required for syncing guides.");
         }
 
-        // Search by the EXTENSION ID (String) to handle updates
+        com.nrkgo.accounts.model.Organization org = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
+
         Optional<SnapGuide> existing = guideRepository.findByExternalId(extId);
 
         SnapGuide guide = existing.orElse(new SnapGuide());
         guide.setExternalId(extId);
         guide.setTitle(guideDto.getTitle() != null ? guideDto.getTitle() : "Untitled Workflow");
         guide.setUser(user);
+        guide.setOrg(org);
         guide.setStorageType(guideDto.getStorageType());
 
-        // Hybrid Columns for Performance
         if (guideDto.getSteps() != null) {
             guide.setTotalSteps(guideDto.getSteps().size());
             if (!guideDto.getSteps().isEmpty()) {
@@ -50,7 +55,6 @@ public class SnapGuideServiceImpl implements SnapGuideService {
             }
         }
 
-        // Audit fields from BaseEntity
         long now = System.currentTimeMillis();
         if (existing.isEmpty()) {
             guide.setCreatedBy(user.getId());
@@ -59,11 +63,10 @@ public class SnapGuideServiceImpl implements SnapGuideService {
         guide.setModifiedBy(user.getId());
         guide.setModifiedTime(now);
 
-        // Serialize steps to JSON
         try {
             String json = objectMapper.writeValueAsString(guideDto.getSteps());
             guide.setStepsJson(json);
-        } catch (JsonProcessingException e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize steps to JSON", e);
         }
 
@@ -71,16 +74,39 @@ public class SnapGuideServiceImpl implements SnapGuideService {
     }
 
     @Override
-    public List<SnapGuide> getGuidesForUser(User user) {
-        return guideRepository.findByUserId(user.getId());
+    public List<SnapGuide> getGuidesForUser(User user, Long orgId) {
+        return guideRepository.findByUserIdAndOrgId(user.getId(), orgId);
     }
 
     @Override
-    public SnapGuide getGuideById(String id, User user) {
+    public org.springframework.data.domain.Page<SnapGuide> getGuidesForUser(User user, Long orgId,
+            org.springframework.data.domain.Pageable pageable) {
+        return guideRepository.findByUserIdAndOrgId(user.getId(), orgId, pageable);
+    }
+
+    @Override
+    public org.springframework.data.domain.Page<SnapGuide> searchGuides(User user, Long orgId, String query,
+            org.springframework.data.domain.Pageable pageable) {
+        return guideRepository.findByUserIdAndOrgIdAndTitleContainingIgnoreCase(user.getId(), orgId, query, pageable);
+    }
+
+    @Override
+    public SnapGuide getGuideById(String id, User user, Long orgId) {
         SnapGuide guide = guideRepository.findByExternalId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Guide not found with ID: " + id));
 
-        if (!guide.getUser().getId().equals(user.getId())) {
+        if (!guide.getUser().getId().equals(user.getId()) || !guide.getOrg().getId().equals(orgId)) {
+            throw new SecurityException("Unauthorized access to guide");
+        }
+        return guide;
+    }
+
+    @Override
+    public SnapGuide getGuideByNumericId(Long id, User user, Long orgId) {
+        SnapGuide guide = guideRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Guide not found with ID: " + id));
+
+        if (!guide.getUser().getId().equals(user.getId()) || !guide.getOrg().getId().equals(orgId)) {
             throw new SecurityException("Unauthorized access to guide");
         }
         return guide;
@@ -88,8 +114,8 @@ public class SnapGuideServiceImpl implements SnapGuideService {
 
     @Override
     @Transactional
-    public void deleteGuide(String id, User user) {
-        SnapGuide guide = getGuideById(id, user);
+    public void deleteGuide(String id, User user, Long orgId) {
+        SnapGuide guide = getGuideById(id, user, orgId);
         guideRepository.delete(guide);
     }
 }

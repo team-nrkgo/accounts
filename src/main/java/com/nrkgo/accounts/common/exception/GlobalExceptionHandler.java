@@ -26,6 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Bad Request: {}", ex.getMessage());
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(ex.getMessage()));
     }
@@ -33,14 +34,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         StringBuilder errorMsg = new StringBuilder("Validation Failed: ");
-        ex.getBindingResult().getFieldErrors().forEach(error -> 
-            errorMsg.append(error.getField()).append(" ").append(error.getDefaultMessage()).append("; "));
-        
+        ex.getBindingResult().getFieldErrors().forEach(
+                error -> errorMsg.append(error.getField()).append(" ").append(error.getDefaultMessage()).append("; "));
+
+        log.warn("Validation Error: {}", errorMsg);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(errorMsg.toString().trim()));
     }
-    
-    // Helper to keep MethodArgumentNotValidException consistent with ApiResponse structure if needed
-    // For now, let's treat validation error as a special 'error' type or just embed in data.
+
+    // Helper to keep MethodArgumentNotValidException consistent with ApiResponse
+    // structure if needed
+    // For now, let's treat validation error as a special 'error' type or just embed
+    // in data.
     // Let's refine the Validation handler to be strictly an error response.
 }

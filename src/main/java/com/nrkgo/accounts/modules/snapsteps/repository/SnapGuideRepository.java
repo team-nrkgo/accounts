@@ -8,7 +8,14 @@ import java.util.Optional;
 
 @Repository
 public interface SnapGuideRepository extends JpaRepository<SnapGuide, Long> {
-    List<SnapGuide> findByUserId(Long userId);
+        List<SnapGuide> findByUserIdAndOrgId(Long userId, Long orgId);
 
-    Optional<SnapGuide> findByExternalId(String externalId);
+        org.springframework.data.domain.Page<SnapGuide> findByUserIdAndOrgId(Long userId, Long orgId,
+                        org.springframework.data.domain.Pageable pageable);
+
+        org.springframework.data.domain.Page<SnapGuide> findByUserIdAndOrgIdAndTitleContainingIgnoreCase(Long userId,
+                        Long orgId, String title,
+                        org.springframework.data.domain.Pageable pageable);
+
+        Optional<SnapGuide> findByExternalId(String externalId);
 }
