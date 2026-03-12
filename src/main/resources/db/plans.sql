@@ -64,31 +64,42 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 INSERT IGNORE INTO products (product_code, slug, name, description, status, created_time) VALUES
 (1, 'snapsteps', 'SnapSteps', 'Interactive step-by-step guide builder', 1, UNIX_TIMESTAMP() * 1000);
 
+-- Echo (product_code = 2)
+INSERT IGNORE INTO products (product_code, slug, name, description, status, created_time) VALUES
+(2, 'echo', 'Echo', 'AI-powered blog publishing platform', 1, UNIX_TIMESTAMP() * 1000);
+
 INSERT IGNORE INTO plans (product_code, plan_name, plan_type, price, currency, features_json, status, created_time) VALUES
--- Starter: Free forever, 1 user, local storage only
+-- Starter: Free
 (1, 'Starter', 1, 0.00, 'USD',
  '{"max_guides": -1, "auto_screenshot": true, "export_pdf": true, "export_html": true, "export_markdown": true, "personal_org": true, "local_storage": true, "walkthrough_playback": true, "cloud_sync": false, "invite_members": false, "remove_branding": false, "blur_sensitive": false, "custom_brand_color": false, "priority_support": false, "max_members": 1, "shared_library": false, "role_based_access": false, "guide_folders": false, "public_guide_links": false, "team_analytics": false, "sso": false, "api_access": false, "audit_logs": false}',
  1, UNIX_TIMESTAMP() * 1000),
 
--- Pro: $9/mo, 1 user, cloud sync + premium features
+-- Pro: $9/mo
 (1, 'Pro', 2, 9.00, 'USD',
  '{"max_guides": -1, "auto_screenshot": true, "export_pdf": true, "export_html": true, "export_markdown": true, "personal_org": true, "local_storage": true, "walkthrough_playback": true, "cloud_sync": true, "invite_members": false, "remove_branding": true, "blur_sensitive": true, "custom_brand_color": true, "priority_support": true, "max_members": 1, "shared_library": false, "role_based_access": false, "guide_folders": false, "public_guide_links": false, "team_analytics": false, "sso": false, "api_access": false, "audit_logs": false}',
  1, UNIX_TIMESTAMP() * 1000),
 
--- Team: $19/user/mo, min 2 users, collaboration features
+-- Team: $19/user/mo
 (1, 'Team', 2, 19.00, 'USD',
  '{"max_guides": -1, "auto_screenshot": true, "export_pdf": true, "export_html": true, "export_markdown": true, "personal_org": true, "local_storage": true, "walkthrough_playback": true, "cloud_sync": true, "invite_members": true, "remove_branding": true, "blur_sensitive": true, "custom_brand_color": true, "priority_support": true, "max_members": -1, "min_members": 2, "shared_library": true, "role_based_access": true, "guide_folders": true, "public_guide_links": true, "team_analytics": true, "sso": false, "api_access": false, "audit_logs": false}',
  1, UNIX_TIMESTAMP() * 1000),
 
--- Enterprise: Custom pricing, SSO + compliance + SLA
+-- Enterprise: Custom
 (1, 'Enterprise', 2, 0.00, 'USD',
  '{"max_guides": -1, "auto_screenshot": true, "export_pdf": true, "export_html": true, "export_markdown": true, "personal_org": true, "local_storage": true, "walkthrough_playback": true, "cloud_sync": true, "invite_members": true, "remove_branding": true, "blur_sensitive": true, "custom_brand_color": true, "priority_support": true, "max_members": -1, "min_members": -1, "shared_library": true, "role_based_access": true, "guide_folders": true, "public_guide_links": true, "team_analytics": true, "sso": true, "scim": true, "api_access": true, "audit_logs": true, "sla": true, "dedicated_success_manager": true}',
- 1, UNIX_TIMESTAMP() * 1000);
+ 1, UNIX_TIMESTAMP() * 1000),
 
--- Next product template:
--- INSERT IGNORE INTO products (product_code, slug, name, status, created_time) VALUES
--- (2, 'my-product', 'My Product Name', 1, UNIX_TIMESTAMP() * 1000);
---
--- INSERT IGNORE INTO plans (product_code, plan_name, plan_type, price, currency, features_json, status, created_time) VALUES
--- (2, 'Starter', 1, 0.00, 'USD', '{"...": "..."}', 1, UNIX_TIMESTAMP() * 1000),
--- (2, 'Pro',     2, 9.00, 'USD', '{"...": "..."}', 1, UNIX_TIMESTAMP() * 1000);
+-- Echo Starter
+(2, 'Starter', 1, 0.00, 'USD',
+ '{"max_posts": 5, "ai_generation": true, "custom_domain": false, "remove_branding": false, "analytics": false, "api_access": false}',
+ 1, UNIX_TIMESTAMP() * 1000),
+
+-- Echo Pro
+(2, 'Pro', 2, 15.00, 'USD',
+ '{"max_posts": -1, "ai_generation": true, "custom_domain": true, "remove_branding": true, "analytics": true, "api_access": false}',
+ 1, UNIX_TIMESTAMP() * 1000),
+
+-- Echo Team
+(2, 'Team', 2, 49.00, 'USD',
+ '{"max_posts": -1, "ai_generation": true, "custom_domain": true, "remove_branding": true, "analytics": true, "api_access": true, "team_collaboration": true}',
+ 1, UNIX_TIMESTAMP() * 1000);

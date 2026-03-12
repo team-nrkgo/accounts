@@ -5,6 +5,11 @@ import java.util.List;
 
 public class SnapGuideDto {
 
+    private Long id;
+
+    @JsonProperty("org_id")
+    private Long orgId;
+
     @JsonProperty("external_id")
     private String externalId; // Explicitly renamed to match the concept
 
@@ -18,7 +23,26 @@ public class SnapGuideDto {
     @JsonProperty("storageType")
     private String storageType;
 
+    @JsonProperty("is_starred")
+    private Boolean isStarred;
+
     // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getOrgId() {
+        return orgId;
+    }
+
+    public void setOrgId(Long orgId) {
+        this.orgId = orgId;
+    }
+
     public String getExternalId() {
         return externalId;
     }
@@ -57,5 +81,13 @@ public class SnapGuideDto {
 
     public void setStorageType(String storageType) {
         this.storageType = storageType;
+    }
+
+    public Boolean getIsStarred() {
+        return isStarred;
+    }
+
+    public void setIsStarred(Boolean isStarred) {
+        this.isStarred = isStarred;
     }
 }

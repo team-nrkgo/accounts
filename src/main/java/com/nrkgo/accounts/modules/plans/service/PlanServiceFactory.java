@@ -37,10 +37,12 @@ public class PlanServiceFactory {
                 svc.productCode = ProductCodes.SNAP_STEPS;
                 return svc;
             }
-            // Future products — just add a case:
-            // case ProductCodes.CENTILIO_PDF:
-            // return new CentilioPdfPlanService(planRepository, subscriptionRepository,
-            // objectMapper);
+            case ProductCodes.ECHO: {
+                DefaultPlanService svc = new DefaultPlanService(
+                        planRepository, subscriptionRepository, objectMapper);
+                svc.productCode = ProductCodes.ECHO;
+                return svc;
+            }
 
             default:
                 throw new IllegalArgumentException("Unknown product code: " + productCode);

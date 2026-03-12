@@ -10,6 +10,10 @@ public interface SnapGuideService {
 
         List<SnapGuide> getGuidesForUser(User user, Long orgId);
 
+        List<SnapGuide> getStarredGuides(User user, Long orgId);
+
+        List<SnapGuide> searchGuides(User user, Long orgId, String query);
+
         org.springframework.data.domain.Page<SnapGuide> getGuidesForUser(User user, Long orgId,
                         org.springframework.data.domain.Pageable pageable);
 
@@ -20,5 +24,14 @@ public interface SnapGuideService {
 
         SnapGuide getGuideByNumericId(Long id, User user, Long orgId);
 
+        SnapGuide updateGuide(Long id, SnapGuideDto guideDto, User user, Long orgId);
+
         void deleteGuide(String id, User user, Long orgId);
+
+        void deleteGuideByNumericId(Long id, User user, Long orgId);
+
+        byte[] exportGuide(Long id, String format, User user, Long orgId);
+
+        org.springframework.data.domain.Page<SnapGuide> getStarredGuides(User user, Long orgId,
+                        org.springframework.data.domain.Pageable pageable);
 }

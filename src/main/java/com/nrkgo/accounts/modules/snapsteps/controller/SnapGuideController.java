@@ -4,6 +4,9 @@ import com.nrkgo.accounts.common.response.ApiResponse;
 import com.nrkgo.accounts.modules.snapsteps.dto.SnapGuideDto;
 import com.nrkgo.accounts.modules.snapsteps.model.SnapGuide;
 import com.nrkgo.accounts.modules.snapsteps.service.SnapGuideService;
+import com.nrkgo.accounts.modules.snapsteps.service.SnapTicketService;
+import com.nrkgo.accounts.modules.snapsteps.dto.SnapTicketDto;
+import com.nrkgo.accounts.modules.snapsteps.model.SnapTicket;
 import com.nrkgo.accounts.model.User;
 import com.nrkgo.accounts.service.UserService;
 import jakarta.servlet.http.Cookie;
@@ -11,11 +14,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
-@RequestMapping("/snapsteps/api/guides")
+@RequestMapping("/snapsteps/api")
 public class SnapGuideController {
 
     private final SnapGuideService guideService;
@@ -25,12 +27,16 @@ public class SnapGuideController {
     @Value("${app.guides.default-limit:30}")
     private int defaultLimit;
 
+    private final SnapTicketService ticketService;
+
     public SnapGuideController(SnapGuideService guideService,
             UserService userService,
-            com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository) {
+            com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
+            SnapTicketService ticketService) {
         this.guideService = guideService;
         this.userService = userService;
         this.orgUserRepository = orgUserRepository;
+        this.ticketService = ticketService;
     }
 
     private User getAuthenticatedUser(HttpServletRequest request) {
@@ -71,7 +77,7 @@ public class SnapGuideController {
         return null;
     }
 
-    @PostMapping("/save")
+    @PostMapping({ "/guides/save", "/guides" })
     public ResponseEntity<ApiResponse<SnapGuide>> saveGuide(
             HttpServletRequest request,
             @RequestBody SnapGuideDto guideDto) {
@@ -95,15 +101,17 @@ public class SnapGuideController {
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @GetMapping
+    @GetMapping("/guides")
     public ResponseEntity<ApiResponse<?>> listGuides(
             HttpServletRequest request,
             @RequestParam(value = "id", required = false) Long guideId,
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
-            @RequestParam(required = false) String search) {
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean starred) {
 
-        System.out.println("DEBUG: listGuides called with id=" + guideId + ", page=" + page + ", search=" + search);
+        System.out.println("DEBUG: listGuides called with id=" + guideId + ", page=" + page + ", search=" + search
+                + ", starred=" + starred);
 
         // Fallback for ID if @RequestParam fails
         if (guideId == null && request.getParameter("id") != null) {
@@ -147,7 +155,9 @@ public class SnapGuideController {
                     org.springframework.data.domain.Sort.by("modifiedTime").descending());
 
             org.springframework.data.domain.Page<SnapGuide> result;
-            if (search != null && !search.trim().isEmpty()) {
+            if (starred != null && starred) {
+                result = guideService.getStarredGuides(user, orgId, pageable);
+            } else if (search != null && !search.trim().isEmpty()) {
                 result = guideService.searchGuides(user, orgId, search, pageable);
             } else {
                 result = guideService.getGuidesForUser(user, orgId, pageable);
@@ -156,12 +166,19 @@ public class SnapGuideController {
         }
 
         // Default: Full list Flow (Backward compatibility)
-        List<SnapGuide> guides = guideService.getGuidesForUser(user, orgId);
+        List<SnapGuide> guides;
+        if (starred != null && starred) {
+            guides = guideService.getStarredGuides(user, orgId);
+        } else if (search != null && !search.trim().isEmpty()) {
+            guides = guideService.searchGuides(user, orgId, search);
+        } else {
+            guides = guideService.getGuidesForUser(user, orgId);
+        }
         return ResponseEntity.ok(ApiResponse.success("Guides fetched successfully", guides));
     }
 
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @GetMapping("/{externalId}")
+    @GetMapping("/guides/{externalId}")
     public ResponseEntity<ApiResponse<SnapGuide>> getGuide(
             HttpServletRequest request,
             @PathVariable String externalId) {
@@ -186,7 +203,76 @@ public class SnapGuideController {
         }
     }
 
-    @DeleteMapping("/{externalId}")
+    @PutMapping("/guides")
+    public ResponseEntity<ApiResponse<SnapGuide>> updateGuide(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long id,
+            @RequestBody SnapGuideDto guideDto) {
+
+        // Use ID from body if query param is null
+        Long targetId = (id != null) ? id : guideDto.getId();
+
+        if (targetId == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Missing guide ID in query or body"));
+        }
+
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+
+        // Use Org ID from body or cookie
+        Long orgId = guideDto.getOrgId();
+        if (orgId == null) {
+            orgId = getOrganizationId(request, user);
+        }
+
+        if (orgId == null) {
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+        }
+
+        try {
+            SnapGuide updatedGuide = guideService.updateGuide(targetId, guideDto, user, orgId);
+            return ResponseEntity.ok(ApiResponse.success("Guide updated successfully", updatedGuide));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Failed to update guide: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/guides")
+    public ResponseEntity<ApiResponse<Void>> deleteGuideByParam(
+            HttpServletRequest request,
+            @RequestParam(required = false) Long id) {
+
+        if (id == null) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Missing required parameter: id"));
+        }
+
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+
+        Long orgId = getOrganizationId(request, user);
+        if (orgId == null) {
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+        }
+
+        try {
+            guideService.deleteGuideByNumericId(id, user, orgId);
+            return ResponseEntity.ok(ApiResponse.success("Guide deleted successfully", null));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(404).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/guides/{externalId}")
     public ResponseEntity<ApiResponse<Void>> deleteGuide(
             HttpServletRequest request,
             @PathVariable String externalId) {
@@ -208,6 +294,68 @@ public class SnapGuideController {
             return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(404).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/guides/export")
+    public ResponseEntity<byte[]> exportGuide(
+            HttpServletRequest request,
+            @RequestParam Long id,
+            @RequestParam String type) {
+
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long orgId = getOrganizationId(request, user);
+        if (orgId == null) {
+            return ResponseEntity.status(400).build();
+        }
+
+        try {
+            byte[] data = guideService.exportGuide(id, type, user, orgId);
+
+            String extension;
+            if (type.equalsIgnoreCase("HTML"))
+                extension = ".html";
+            else if (type.equalsIgnoreCase("PDF"))
+                extension = ".pdf";
+            else
+                extension = ".md";
+
+            String fileName = "guide_" + id + extension;
+
+            return ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + fileName + "\"")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                    .body(data);
+        } catch (Exception e) {
+            System.err.println("EXPORT ERROR for type=" + type + ": " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/support/tickets")
+    public ResponseEntity<ApiResponse<SnapTicket>> createTicket(
+            HttpServletRequest request,
+            @RequestBody com.nrkgo.accounts.modules.snapsteps.dto.SnapTicketDto ticketDto) {
+
+        User user = getAuthenticatedUser(request);
+        Long orgId = null;
+        if (user != null) {
+            orgId = getOrganizationId(request, user);
+        }
+
+        try {
+            SnapTicket ticket = ticketService.createTicket(ticketDto, orgId);
+            return ResponseEntity.ok(ApiResponse.success("Ticket submitted successfully", ticket));
+        } catch (Exception e) {
+            System.err.println("SUPPORT SUBMISSION ERROR: [" + e.getClass().getName() + "] " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(ApiResponse.error("Failed to submit ticket: " + e.getMessage()));
         }
     }
 }

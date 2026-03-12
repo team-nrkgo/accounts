@@ -29,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final com.nrkgo.accounts.repository.RoleRepository roleRepository;
     private final com.nrkgo.accounts.service.MailService mailService;
     private final com.nrkgo.accounts.repository.DigestRepository digestRepository;
+    private final com.nrkgo.accounts.service.NotificationService notificationService;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend.url}")
     private String frontendUrl;
@@ -44,7 +45,8 @@ public class UserServiceImpl implements UserService {
             com.nrkgo.accounts.repository.OrgUserRepository orgUserRepository,
             com.nrkgo.accounts.repository.RoleRepository roleRepository,
             com.nrkgo.accounts.service.MailService mailService,
-            com.nrkgo.accounts.repository.DigestRepository digestRepository) {
+            com.nrkgo.accounts.repository.DigestRepository digestRepository,
+            com.nrkgo.accounts.service.NotificationService notificationService) {
         this.userRepository = userRepository;
         this.userSessionRepository = userSessionRepository;
         this.passwordEncoder = passwordEncoder;
@@ -53,6 +55,7 @@ public class UserServiceImpl implements UserService {
         this.roleRepository = roleRepository;
         this.mailService = mailService;
         this.digestRepository = digestRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -159,6 +162,27 @@ public class UserServiceImpl implements UserService {
 
         // --- Email Verification Setup ---
         sendVerificationEmail(savedUser);
+
+        // --- Slack Notification ---
+        try {
+            java.util.Map<String, Object> metadata = new java.util.LinkedHashMap<>();
+            metadata.put("User ID", savedUser.getId());
+            metadata.put("Email", savedUser.getEmail());
+            metadata.put("Name",
+                    savedUser.getFirstName() + " " + (savedUser.getLastName() != null ? savedUser.getLastName() : ""));
+            metadata.put("Organization", savedOrg.getOrgName());
+            metadata.put("Plan", "Free (Default)");
+            metadata.put("Source", "Web Signup");
+
+            notificationService.sendAlert("🚀 New User Registered",
+                    "A new user has joined the platform and created their workspace.",
+                    "SUCCESS",
+                    metadata);
+
+            log.info("Signup Slack notification sent for: {}", savedUser.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send signup notification", e);
+        }
 
         return savedUser;
 

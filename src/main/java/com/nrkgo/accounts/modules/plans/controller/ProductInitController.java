@@ -62,7 +62,7 @@ public class ProductInitController {
      *                default org.
      */
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @GetMapping("/{product}/init")
+    @GetMapping({ "/{product}/init", "/api/{product}/init" })
     public ResponseEntity<ApiResponse<ProductInitResponse>> productInit(
             @PathVariable String product,
             @RequestParam(required = false) Long orgId,

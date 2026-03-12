@@ -10,6 +10,10 @@ import java.util.Optional;
 public interface SnapGuideRepository extends JpaRepository<SnapGuide, Long> {
         List<SnapGuide> findByUserIdAndOrgId(Long userId, Long orgId);
 
+        List<SnapGuide> findByUserIdAndOrgIdAndIsStarred(Long userId, Long orgId, Integer isStarred);
+
+        List<SnapGuide> findByUserIdAndOrgIdAndTitleContainingIgnoreCase(Long userId, Long orgId, String title);
+
         org.springframework.data.domain.Page<SnapGuide> findByUserIdAndOrgId(Long userId, Long orgId,
                         org.springframework.data.domain.Pageable pageable);
 
@@ -18,4 +22,7 @@ public interface SnapGuideRepository extends JpaRepository<SnapGuide, Long> {
                         org.springframework.data.domain.Pageable pageable);
 
         Optional<SnapGuide> findByExternalId(String externalId);
+
+        org.springframework.data.domain.Page<SnapGuide> findByUserIdAndOrgIdAndIsStarred(Long userId, Long orgId,
+                        Integer isStarred, org.springframework.data.domain.Pageable pageable);
 }

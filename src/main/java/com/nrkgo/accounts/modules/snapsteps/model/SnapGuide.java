@@ -39,6 +39,9 @@ public class SnapGuide extends BaseEntity {
     @Column(name = "storage_type")
     private String storageType;
 
+    @Column(name = "is_starred")
+    private Integer isStarred = 0;
+
     // Manual Getters and Setters
     public Long getId() {
         return id;
@@ -112,5 +115,13 @@ public class SnapGuide extends BaseEntity {
 
     public void setStorageType(String storageType) {
         this.storageType = storageType;
+    }
+
+    public Integer getIsStarred() {
+        return isStarred;
+    }
+
+    public void setIsStarred(Integer isStarred) {
+        this.isStarred = isStarred;
     }
 }

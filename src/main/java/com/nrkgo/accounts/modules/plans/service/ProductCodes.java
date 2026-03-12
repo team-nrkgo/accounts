@@ -13,7 +13,7 @@ import java.util.Map;
 public final class ProductCodes {
 
     public static final int SNAP_STEPS = 1;
-    // Next product: public static final int MY_NEXT_PRODUCT = 2;
+    public static final int ECHO = 2;
 
     private ProductCodes() {
     }

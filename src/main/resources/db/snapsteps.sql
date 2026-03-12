@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS ss_guides (
     total_steps INT DEFAULT 0,
     first_url TEXT,
     storage_type VARCHAR(20) DEFAULT 'cloud',  -- 'cloud' or 'local'
+    is_starred TINYINT(1) DEFAULT 0,           -- 1: Starred, 0: Normal
     created_by BIGINT,
     created_time BIGINT,
     modified_by BIGINT,
@@ -35,4 +36,23 @@ CREATE TABLE IF NOT EXISTS ss_usage (
     UNIQUE KEY idx_user_org (user_id, org_id), -- One usage row per user per org
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE CASCADE
+);
+
+-- 3. Support Tickets Table
+CREATE TABLE IF NOT EXISTS ss_tickets (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT,
+    org_id BIGINT,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    browser_info TEXT,
+    status VARCHAR(20) DEFAULT 'OPEN', -- OPEN, CLOSED, IN_PROGRESS
+    created_time BIGINT,
+    modified_time BIGINT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (org_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX (user_id),
+    INDEX (org_id),
+    INDEX (email)
 );

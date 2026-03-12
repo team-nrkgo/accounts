@@ -1,6 +1,7 @@
 package com.nrkgo.accounts.modules.plans.controller;
 
 import com.nrkgo.accounts.common.response.ApiResponse;
+import com.nrkgo.accounts.model.Organization;
 import com.nrkgo.accounts.model.User;
 import com.nrkgo.accounts.modules.plans.model.Plan;
 import com.nrkgo.accounts.modules.plans.model.Subscription;
@@ -10,6 +11,8 @@ import com.nrkgo.accounts.modules.plans.service.PlanService;
 import com.nrkgo.accounts.modules.plans.service.PlanServiceFactory;
 import com.nrkgo.accounts.modules.plans.service.ProductCodes;
 import com.nrkgo.accounts.service.UserService;
+import com.nrkgo.accounts.repository.OrgUserRepository;
+import com.nrkgo.accounts.repository.OrganizationRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
@@ -26,15 +29,52 @@ public class PlanController {
     private final PlanRepository planRepository;
     private final ProductRepository productRepository;
     private final UserService userService;
+    private final OrgUserRepository orgUserRepository;
+    private final OrganizationRepository organizationRepository;
 
     public PlanController(PlanServiceFactory planServiceFactory,
             PlanRepository planRepository,
             ProductRepository productRepository,
-            UserService userService) {
+            UserService userService,
+            OrgUserRepository orgUserRepository,
+            OrganizationRepository organizationRepository) {
         this.planServiceFactory = planServiceFactory;
         this.planRepository = planRepository;
         this.productRepository = productRepository;
         this.userService = userService;
+        this.orgUserRepository = orgUserRepository;
+        this.organizationRepository = organizationRepository;
+    }
+
+    private Organization getOrg(HttpServletRequest request, User user) {
+        String orgIdStr = null;
+        if (request.getCookies() != null) {
+            for (Cookie c : request.getCookies()) {
+                if ("ORG_ID".equals(c.getName())) {
+                    orgIdStr = c.getValue();
+                    break;
+                }
+            }
+        }
+        Long orgId = null;
+        if (orgIdStr != null) {
+            try {
+                orgId = Long.parseLong(orgIdStr);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        if (orgId == null) {
+            orgId = orgUserRepository.findByUserId(user.getId()).stream()
+                    .filter(ou -> ou.getIsDefault() != null && ou.getIsDefault() == 1)
+                    .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
+                    .findFirst()
+                    .orElseGet(() -> orgUserRepository.findByUserId(user.getId()).stream()
+                            .map(com.nrkgo.accounts.model.OrgUser::getOrgId)
+                            .findFirst().orElse(null));
+        }
+        if (orgId == null)
+            return null;
+        return organizationRepository.findById(orgId).orElse(null);
     }
 
     private User getAuthenticatedUser(HttpServletRequest request) {
@@ -65,8 +105,12 @@ public class PlanController {
         if (user == null)
             return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
 
+        Organization org = getOrg(request, user);
+        if (org == null)
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+
         PlanService service = planServiceFactory.getInstance(productCode);
-        Subscription sub = service.getActiveSubscription(user);
+        Subscription sub = service.getActiveSubscription(org);
 
         if (sub == null)
             return ResponseEntity.ok(ApiResponse.success("No active subscription", null));
@@ -81,10 +125,7 @@ public class PlanController {
     public ResponseEntity<ApiResponse<List<Plan>>> listPlans(
             @RequestParam(defaultValue = "101") int productCode) {
 
-        var product = productRepository.findByProductCode(productCode)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown product code: " + productCode));
-
-        List<Plan> plans = planRepository.findByProductIdAndStatus(product.getId(), 1);
+        List<Plan> plans = planRepository.findByProductCodeAndStatus(productCode, 1);
         return ResponseEntity.ok(ApiResponse.success("Plans", plans));
     }
 
@@ -101,8 +142,12 @@ public class PlanController {
         if (user == null)
             return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
 
+        Organization org = getOrg(request, user);
+        if (org == null)
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+
         PlanService service = planServiceFactory.getInstance(productCode);
-        Subscription sub = service.initFreePlan(user);
+        Subscription sub = service.initFreePlan(org, user);
         return ResponseEntity.ok(ApiResponse.success("Free plan initialized", sub));
     }
 
@@ -119,11 +164,15 @@ public class PlanController {
         if (user == null)
             return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
 
+        Organization org = getOrg(request, user);
+        if (org == null)
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+
         int productCode = body.getOrDefault("productCode", ProductCodes.SNAP_STEPS);
         Long planId = body.get("planId").longValue();
 
         PlanService service = planServiceFactory.getInstance(productCode);
-        Subscription sub = service.switchPlan(user, planId);
+        Subscription sub = service.switchPlan(org, planId, "manual", user.getId(), null);
         return ResponseEntity.ok(ApiResponse.success("Plan switched", sub));
     }
 
@@ -140,8 +189,12 @@ public class PlanController {
         if (user == null)
             return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
 
+        Organization org = getOrg(request, user);
+        if (org == null)
+            return ResponseEntity.status(400).body(ApiResponse.error("Organization context missing"));
+
         PlanService service = planServiceFactory.getInstance(productCode);
-        service.cancelSubscription(user);
+        service.cancelSubscription(org, user.getId());
         return ResponseEntity.ok(ApiResponse.success("Subscription cancelled and downgraded to free", null));
     }
 }

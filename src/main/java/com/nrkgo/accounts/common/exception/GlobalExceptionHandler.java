@@ -17,9 +17,29 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private final com.nrkgo.accounts.service.NotificationService notificationService;
+
+    public GlobalExceptionHandler(com.nrkgo.accounts.service.NotificationService notificationService) {
+        this.notificationService = notificationService;
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex,
+            jakarta.servlet.http.HttpServletRequest request) {
         log.error("Unhandled exception occurred", ex);
+
+        // Send Slack Notification
+        try {
+            java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+            metadata.put("Endpoint", request.getRequestURI());
+            metadata.put("Method", request.getMethod());
+            metadata.put("Remote IP", request.getRemoteAddr());
+
+            notificationService.sendError("Internal Server Error", ex, metadata);
+        } catch (Exception e) {
+            log.error("Failed to send error notification", e);
+        }
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("An internal error occurred: " + ex.getMessage()));
     }
