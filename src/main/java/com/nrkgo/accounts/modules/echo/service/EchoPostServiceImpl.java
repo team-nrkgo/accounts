@@ -8,10 +8,14 @@ import com.nrkgo.accounts.modules.echo.repository.EchoPostRepository;
 import com.nrkgo.accounts.modules.echo.repository.EchoTagRepository;
 import com.nrkgo.accounts.modules.echo.integration.EchoIntegrationService;
 import com.nrkgo.accounts.modules.scheduler.service.SchedulerService;
+import com.nrkgo.accounts.modules.drive.service.DriveStorageService;
+import com.nrkgo.accounts.modules.drive.model.DriveFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 import java.util.Optional;
 import java.util.Set;
@@ -26,14 +30,17 @@ public class EchoPostServiceImpl implements EchoPostService {
     private final EchoTagRepository tagRepository;
     private final EchoIntegrationService integrationService;
     private final SchedulerService schedulerService;
+    private final DriveStorageService driveStorageService;
 
     public EchoPostServiceImpl(EchoPostRepository repository, EchoTagRepository tagRepository,
             EchoIntegrationService integrationService,
-            SchedulerService schedulerService) {
+            SchedulerService schedulerService,
+            DriveStorageService driveStorageService) {
         this.repository = repository;
         this.tagRepository = tagRepository;
         this.integrationService = integrationService;
         this.schedulerService = schedulerService;
+        this.driveStorageService = driveStorageService;
     }
 
     @Override
@@ -306,5 +313,26 @@ public class EchoPostServiceImpl implements EchoPostService {
                 integrationService.handlePostPublished(convertToDto(saved));
             }
         });
+    }
+
+    @Override
+    @Transactional
+    public String uploadFeaturedImage(Long id, MultipartFile file, User user, Long orgId) throws IOException {
+        EchoPost post = repository.findByIdAndUserIdAndOrgId(id, user.getId(), orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found or access denied"));
+
+        DriveFile driveFile = driveStorageService.uploadFile(
+                file,
+                "ECHO",
+                orgId,
+                user.getId(),
+                "PUBLIC",
+                "posts");
+
+        String fileUrl = driveStorageService.generatePublicUrl(driveFile);
+        post.setFeaturedImageUrl(fileUrl);
+        repository.save(post);
+
+        return fileUrl;
     }
 }

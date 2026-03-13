@@ -12,6 +12,9 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -60,7 +63,8 @@ public class DriveStorageService {
     }
 
     @Transactional
-    public DriveFile uploadFile(MultipartFile file, String productModule, Long orgId, Long userId, String accessLevel)
+    public DriveFile uploadFile(MultipartFile file, String productModule, Long orgId, Long userId, String accessLevel,
+            String subFolder)
             throws IOException {
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
@@ -75,8 +79,10 @@ public class DriveStorageService {
 
         String externalId = UUID.randomUUID().toString();
 
-        // org_101/echo/uuid.jpg
-        String objectKey = String.format("org_%d/%s/%s.%s", orgId, productModule.toLowerCase(), externalId, extension);
+        // org_101/echo/settings/uuid.jpg
+        String folderPath = (subFolder != null && !subFolder.trim().isEmpty()) ? subFolder.toLowerCase() + "/" : "";
+        String objectKey = String.format("org_%d/%s/%s%s.%s", orgId, productModule.toLowerCase(), folderPath,
+                externalId, extension);
 
         if ("CLOUDFLARE_R2".equals(activeProvider) && s3Client != null) {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -104,6 +110,7 @@ public class DriveStorageService {
         driveFile.setUserId(userId);
         driveFile.setOrgId(orgId);
         driveFile.setAccessLevel(accessLevel);
+        driveFile.setStoragePath(objectKey);
         driveFile.setCreatedTime(System.currentTimeMillis());
 
         return repository.save(driveFile);
@@ -112,16 +119,35 @@ public class DriveStorageService {
     public String generatePublicUrl(DriveFile file) {
         if ("CLOUDFLARE_R2".equals(file.getStorageProvider()) && cloudflarePublicUrl != null
                 && !cloudflarePublicUrl.isEmpty()) {
-            String objectKey = String.format("org_%d/%s/%s.%s",
-                    file.getOrgId(), file.getProductModule().toLowerCase(), file.getExternalId(),
-                    file.getFileExtension());
-            return cloudflarePublicUrl + "/" + objectKey;
+            String folderPath = (file.getAccessLevel() != null && file.getAccessLevel().contains("/"))
+                    ? file.getAccessLevel() + "/"
+                    : "";
+            // Note: We'll repurpose a field or just use the DB to reconstruct the key.
+            // Actually, it's safer to store the full object key in the DB or calculate it.
+            // For now, let's keep it simple and assume the same logic.
+            return cloudflarePublicUrl + "/" + getObjectKey(file);
         }
         return "/api/drive/v1/files/download/" + file.getExternalId();
+    }
+
+    private String getObjectKey(DriveFile file) {
+        return file.getStoragePath();
     }
 
     public DriveFile getFileByExternalId(String externalId) {
         return repository.findByExternalId(externalId)
                 .orElseThrow(() -> new IllegalArgumentException("File not found"));
+    }
+
+    public ResponseInputStream<GetObjectResponse> getFileStream(DriveFile file) {
+        if ("CLOUDFLARE_R2".equals(file.getStorageProvider()) && s3Client != null) {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(cloudflareBucket)
+                    .key(file.getStoragePath())
+                    .build();
+
+            return s3Client.getObject(getObjectRequest);
+        }
+        throw new RuntimeException("S3 client not initialized or provider mismatch");
     }
 }

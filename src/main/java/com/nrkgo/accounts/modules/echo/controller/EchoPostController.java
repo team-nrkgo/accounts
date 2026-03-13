@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class EchoPostController {
@@ -223,6 +224,29 @@ public class EchoPostController {
             return ResponseEntity.ok(ApiResponse.success("Public post fetched", post));
         } catch (Exception e) {
             return ResponseEntity.status(404).body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/echo/posts/{id}/featured-image")
+    public ResponseEntity<ApiResponse<String>> uploadFeaturedImage(
+            HttpServletRequest request,
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("org_id") Long orgId) {
+
+        User user = getAuthenticatedUser(request);
+        if (user == null) {
+            return ResponseEntity.status(401).body(ApiResponse.error("Unauthenticated"));
+        }
+
+        try {
+            validateOrganizationMembership(user, orgId);
+            String imageUrl = service.uploadFeaturedImage(id, file, user, orgId);
+            return ResponseEntity.ok(ApiResponse.success("Featured image uploaded successfully", imageUrl));
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Upload failed: " + e.getMessage()));
         }
     }
 }

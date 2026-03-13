@@ -62,9 +62,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(errorMsg.toString().trim()));
     }
 
-    // Helper to keep MethodArgumentNotValidException consistent with ApiResponse
-    // structure if needed
-    // For now, let's treat validation error as a special 'error' type or just embed
-    // in data.
-    // Let's refine the Validation handler to be strictly an error response.
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        // Log as info to avoid noise, as browsers often check for favicon.ico
+        // automatically
+        log.info("Resource not found: {}", ex.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Resource not found: " + ex.getResourcePath()));
+    }
 }

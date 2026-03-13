@@ -5,6 +5,7 @@ import com.nrkgo.accounts.modules.echo.dto.EchoPostDto;
 import com.nrkgo.accounts.modules.echo.model.EchoPost;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface EchoPostService {
 
@@ -31,4 +32,6 @@ public interface EchoPostService {
     EchoPostDto getPostByIdInternal(Long id);
 
     void publishPostInternal(Long id);
+
+    String uploadFeaturedImage(Long id, MultipartFile file, User user, Long orgId) throws java.io.IOException;
 }

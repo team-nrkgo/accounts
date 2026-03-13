@@ -1,0 +1,76 @@
+[
+  {
+    "id": "GOOGLE",
+    "name": "Google Workspace",
+    "description": "Connect Drive for file storage and YouTube for video management.",
+    "category": "Cloud Storage",
+    "auth_methods": [
+      { "type": "OAUTH", "label": "Standard Connect (OAuth)" },
+      { "type": "API_KEY", "label": "Advanced: Browser/API Key" }
+    ],
+    "color": "#4285F4",
+    "icon": "google",
+    "is_active": true
+  },
+  {
+    "id": "SLACK",
+    "name": "Slack",
+    "description": "Send automated notifications and alerts to your team channels.",
+    "category": "Communication",
+    "auth_methods": [
+      { "type": "OAUTH", "label": "Install Slack App" }
+    ],
+    "color": "#4A154B",
+    "icon": "slack",
+    "is_active": true
+  },
+  {
+    "id": "WORDPRESS",
+    "name": "WordPress",
+    "description": "Sync and publish Echo posts directly to your self-hosted site.",
+    "category": "CMS",
+    "auth_methods": [
+      { "type": "API_KEY", "label": "App Password / API Key" },
+      { "type": "OAUTH", "label": "Connection via OAuth" }
+    ],
+    "color": "#21759B",
+    "icon": "wordpress",
+    "is_active": true
+  },
+  {
+    "id": "WIX",
+    "name": "Wix",
+    "description": "Publish Echo content directly to your Wix-powered website.",
+    "category": "CMS",
+    "auth_methods": [
+      { "type": "OAUTH", "label": "Connect Wix Store" }
+    ],
+    "color": "#0C6EFC",
+    "icon": "wix",
+    "is_active": true
+  },
+  {
+    "id": "FACEBOOK",
+    "name": "Facebook",
+    "description": "Automate social sharing and track post engagement analytics.",
+    "category": "Social Media",
+    "auth_methods": [
+      { "type": "OAUTH", "label": "Login with Facebook" }
+    ],
+    "color": "#1877F2",
+    "icon": "facebook",
+    "is_active": false
+  },
+  {
+    "id": "CLOUDFLARE_R2",
+    "name": "Cloudflare R2",
+    "description": "Enterprise-grade object storage with zero egress fees for your files and media.",
+    "category": "Cloud Storage",
+    "auth_methods": [
+      { "type": "API_KEY", "label": "R2 API Token (Access/Secret Key)" }
+    ],
+    "color": "#F38020",
+    "icon": "cloudflare",
+    "is_active": true
+  }
+]

@@ -41,10 +41,21 @@ public class DriveFile implements Serializable {
     @Column(name = "access_level", columnDefinition = "ENUM('USER_PRIVATE', 'ORG_SHARED', 'PUBLIC') DEFAULT 'USER_PRIVATE'")
     private String accessLevel;
 
+    @Column(name = "storage_path", length = 500)
+    private String storagePath;
+
     @Column(name = "created_time")
     private Long createdTime;
 
     // Getters and Setters
+
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
+    }
 
     public Long getId() {
         return id;

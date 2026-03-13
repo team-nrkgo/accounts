@@ -32,7 +32,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/**", "/h2-console/**").permitAll() // Allow all API endpoints
                                                                                   // (Controllers handle auth)
-                        .requestMatchers("/", "/index.html", "/assets/**", "/vite.svg", "/*.js", "/*.css", "/static/**",
+                        .requestMatchers("/", "/index.html", "/assets/**", "/vite.svg", "/favicon.ico", "/*.js",
+                                "/*.css", "/static/**",
                                 "/error")
                         .permitAll()
                         .anyRequest().permitAll() // Actually, since we're serving a modern SPA, we should probably
